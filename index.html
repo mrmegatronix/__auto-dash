@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoDash · Network Discovery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #080c14;
+      --bg2:       #0d1320;
+      --bg3:       #111827;
+      --surface:   #141c2e;
+      --surface2:  #1a2540;
+      --border:    rgba(99,179,255,0.12);
+      --border2:   rgba(99,179,255,0.22);
+      --accent:    #3b82f6;
+      --accent2:   #60a5fa;
+      --accent3:   #93c5fd;
+      --green:     #22c55e;
+      --green2:    #4ade80;
+      --yellow:    #f59e0b;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --text2:     #94a3b8;
+      --text3:     #64748b;
+      --radius:    14px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      box-shadow: 0 0 15px rgba(59,130,246,0.3);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-text h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #93c5fd, #60a5fa, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-bar {
+      display: flex; gap: 5px; background: var(--surface); padding: 5px;
+      border-radius: 12px; border: 1px solid var(--border);
+    }
+    .nav-link {
+      padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      color: var(--text2); text-decoration: none; transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: #fff; background: var(--accent); }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+      border-radius: 100px; background: var(--surface); border: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text2); font-family: 'JetBrains Mono', monospace;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
+    .status-dot.scanning { background: var(--accent2); box-shadow: 0 0 8px var(--accent); animation: pulse 1.2s infinite; }
+    .status-dot.done { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .stat-card {
+      flex: 1; min-width: 130px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
+    .input-group {
+      display: flex; align-items: center; gap: 8px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 14px;
+    }
+    .input-group input, .input-group select {
+      background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace;
+      padding: 10px 0; outline: none; width: 170px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px;
+      border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; }
+    .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+    .progress-wrap { height: 3px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 28px; }
+    .progress-bar { height: 100%; background: var(--accent); transition: width 0.15s; }
+
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 22px; }
+    .chip { padding: 5px 13px; border-radius: 100px; font-size: 0.78rem; font-weight: 600; background: var(--surface); border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
+    .chip.active { background: var(--accent); color: #fff; }
+    #search-box { margin-left: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 14px; color: var(--text); }
+
+    #hosts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+    .host-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; display: flex; flex-direction: column; gap: 14px; animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .card-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface2); }
+    .card-title-wrap { flex: 1; min-width: 0; }
+    .card-ip { font-family: 'JetBrains Mono', monospace; font-size: 0.98rem; font-weight: 600; color: var(--accent3); }
+    .card-hostname { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+
+    .badge { padding: 3px 9px; border-radius: 100px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .badge-up { background: rgba(34,197,94,0.15); color: var(--green2); }
+    .badge-slow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+
+    .ports-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .port-tag {
+      padding: 4px 10px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text2); text-decoration: none;
+    }
+
+    .meta-row { display: flex; justify-content: space-between; gap: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .meta-item { font-size: 0.7rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+    #scan-log { background: var(--bg2); border-radius: var(--radius); padding: 12px; margin-top: 20px; max-height: 150px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--text3); }
+
+    /* PiP Styling */
+    .pip-toggle {
+        position: fixed; bottom: 30px; left: 30px; z-index: 5000;
+        background: var(--accent); color: white; border: none;
+        padding: 12px 24px; border-radius: 50px; font-weight: 800; cursor: pointer;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); font-size: 0.8rem;
+        display: flex; align-items: center; gap: 8px; transition: 0.2s;
+    }
+    .pip-toggle:hover { transform: scale(1.05); }
+    .pip-window {
+        position: fixed; bottom: 90px; left: 30px; width: 350px; height: 200px;
+        background: #000; border: 2px solid var(--accent); border-radius: 15px;
+        z-index: 5000; overflow: hidden; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        animation: pipIn 0.3s ease;
+    }
+    @keyframes pipIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .pip-window iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🌐</div>
+      <div class="brand-text"><h1>AutoDash</h1></div>
+    </div>
+    <nav class="nav-bar">
+      <a href="index.html" class="nav-link active">Scanner</a>
+      <a href="links.html" class="nav-link">Quick Links</a>
+    </nav>
+    <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-text">Ready</span></div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-label">Scanned</div><div class="stat-value" id="stat-scanned">0</div></div>
+    <div class="stat-card"><div class="stat-label">Found</div><div class="stat-value" id="stat-found">0</div></div>
+    <div class="stat-card"><div class="stat-label">Ports</div><div class="stat-value" id="stat-ports">0</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="input-group"><label>Subnet</label><input id="subnet-input" type="text" value="192.168.1"></div>
+    <div class="input-group">
+      <select id="port-preset">
+        <option value="common">Common Ports</option>
+        <option value="web">Web Ports</option>
+        <option value="extended">Extended (Dev + DB)</option>
+        <option value="intensive">Intensive (Top 100)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="startScan()" id="scan-btn">Scan Now</button>
+    <button class="btn btn-secondary" onclick="stopScan()" id="stop-btn" style="display:none">Stop</button>
+  </div>
+
+  <div class="progress-wrap hidden" id="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+
+  <div class="toolbar">
+    <button class="chip active" onclick="setFilter('all')">All</button>
+    <button class="chip" onclick="setFilter('fast')">⚡ Fast</button>
+    <input type="text" id="search-box" placeholder="🔍 Search IP or Hostname…" oninput="renderCards()">
+  </div>
+
+  <div id="hosts-grid"></div>
+  <div id="scan-log"></div>
+
+  <!-- PiP Elements -->
+  <div id="pip-window" class="pip-window">
+      <iframe id="pip-frame" src=""></iframe>
+  </div>
+  <button class="pip-toggle" onclick="togglePip()">
+      <span style="font-size: 1.2rem;">🖼️</span> 
+      <span>LIVE LINKS</span>
+  </button>
+</div>
+
+<script>
+const PORT_PRESETS = {
+  common: [22, 80, 443, 8080, 8443, 3000, 3001],
+  web: [80, 443, 8000, 8080, 8443, 8888, 9000, 9443],
+  extended: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379, 8081, 9000, 9090, 27017],
+  intensive: [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 548, 587, 631, 993, 995, 1025, 1723, 1883, 2049, 3000, 3001, 3128, 3306, 3389, 4000, 5000, 5060, 5173, 5432, 5900, 5984, 6379, 8000, 8008, 8080, 8081, 8443, 8888, 9000, 9090, 9100, 9443, 27017]
+};
+
+const PORT_NAMES = { 
+  21: 'FTP', 22: 'SSH', 23: 'Telnet', 25: 'SMTP', 53: 'DNS', 80: 'HTTP', 110: 'POP3', 143: 'IMAP', 
+  443: 'HTTPS', 445: 'SMB', 1883: 'MQTT', 3000: 'NodeJS', 3306: 'MySQL', 3389: 'RDP', 
+  5000: 'Flask', 5432: 'Postgres', 6379: 'Redis', 8080: 'Web-Alt', 8443: 'SSL-Alt', 
+  9000: 'Portainer', 27017: 'MongoDB' 
+};
+
+let discovered = [], scanning = false, abortCtl = null, doneProbes = 0, totalProbes = 0, filterMode = 'all';
+
+function isHttps(p) { return [443, 8443, 9443, 4443].includes(p); }
+function portUrl(ip, p) { return `${isHttps(p)?'https':'http'}://${ip}:${p}`; }
+
+async function startScan() {
+  if (scanning) return;
+  scanning = true; discovered = []; doneProbes = 0;
+  abortCtl = new AbortController();
+  setStatus('scanning');
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('stop-btn').style.display = '';
+  document.getElementById('progress-wrap').classList.remove('hidden');
+  document.getElementById('hosts-grid').innerHTML = '';
+  
+  const subnet = document.getElementById('subnet-input').value;
+  const ports = PORT_PRESETS[document.getElementById('port-preset').value];
+  const hosts = Array.from({length: 254}, (_, i) => `${subnet}.${i+1}`);
+  totalProbes = hosts.length * ports.length;
+
+  const BATCH_SIZE = 30; 
+  for (let i = 0; i < hosts.length; i++) {
+    if (abortCtl.signal.aborted) break;
+    const ip = hosts[i];
+    
+    // Process ports in smaller parallel batches to avoid browser hanging
+    for (let j = 0; j < ports.length; j += BATCH_SIZE) {
+        const batch = ports.slice(j, j + BATCH_SIZE);
+        await Promise.all(batch.map(async p => {
+            const start = Date.now();
+            try {
+                const ac = new AbortController();
+                const tid = setTimeout(() => ac.abort(), 1200);
+                await fetch(portUrl(ip, p), { mode:'no-cors', signal: ac.signal });
+                clearTimeout(tid);
+                mergeHost(ip, { port: p, ms: Date.now() - start });
+            } catch(e) {}
+            doneProbes++;
+            updateProgress();
+        }));
+    }
+    document.getElementById('stat-scanned').textContent = i + 1;
+  }
+  finishScan();
+}
+
+function stopScan() { if (abortCtl) abortCtl.abort(); finishScan(); }
+function finishScan() {
+  scanning = false;
+  document.getElementById('scan-btn').disabled = false;
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('progress-wrap').classList.add('hidden');
+  setStatus('done');
+}
+
+function setStatus(s) { document.getElementById('status-dot').className = 'status-dot ' + s; document.getElementById('status-text').textContent = s; }
+function updateProgress() { document.getElementById('progress-bar').style.width = (doneProbes / totalProbes * 100) + '%'; }
+
+function mergeHost(ip, data) {
+  let h = discovered.find(x => x.ip === ip);
+  if (!h) { h = { ip, ports:[], firstSeen: new Date().toLocaleTimeString(), mac: 'Restricted (Browser)' }; discovered.push(h); }
+  if (!h.ports.find(x => x.port === data.port)) h.ports.push(data);
+  h.ports.sort((a,b) => a.port - b.port);
+  updateCard(h);
+  resolveMetadata(h, data.port);
+}
+
+async function resolveMetadata(h, p) {
+  const url = portUrl(h.ip, p);
+  const img = new Image(); img.onload = () => { h.favicon = url+'/favicon.ico'; updateCard(h); }; img.src = url+'/favicon.ico';
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
+    const text = await res.text();
+    const m = text.match(/<title>([^<]+)<\/title>/i);
+    if (m) { h.hostname = m[1].trim(); updateCard(h); }
+  } catch(e) {}
+}
+
+function updateCard(h) {
+  const grid = document.getElementById('hosts-grid');
+  let el = document.getElementById('card-' + h.ip.replace(/\./g, '-'));
+  if (!el) { grid.insertAdjacentHTML('beforeend', `<div id="card-${h.ip.replace(/\./g, '-')}"></div>`); el = document.getElementById('card-' + h.ip.replace(/\./g, '-')); }
+  el.outerHTML = buildCard(h);
+  document.getElementById('stat-found').textContent = discovered.length;
+  document.getElementById('stat-ports').textContent = discovered.reduce((a, x) => a + x.ports.length, 0);
+}
+
+function buildCard(h) {
+  const title = h.hostname || h.ip;
+  const sub = h.hostname ? h.ip : `Discovered: ${h.firstSeen}`;
+  const icon = h.favicon ? `<img src="${h.favicon}" width="24">` : '🌐';
+  return `
+    <div class="host-card" id="card-${h.ip.replace(/\./g, '-')}">
+      <div class="card-header">
+        <div class="card-icon">${icon}</div>
+        <div class="card-title-wrap">
+          <div class="card-ip">${title}</div>
+          <div class="card-hostname">${sub}</div>
+        </div>
+        <span class="badge badge-up">UP</span>
+      </div>
+      <div class="ports-row">
+        ${h.ports.map(p => {
+          const name = PORT_NAMES[p.port] ? ` <span style='opacity:0.6'>${PORT_NAMES[p.port]}</span>` : '';
+          return `<span class="port-tag">${p.port}${name}</span>`;
+        }).join('')}
+      </div>
+      <div class="meta-row">
+        <span class="meta-item">MAC: ${h.mac}</span>
+        <span class="meta-item">${h.ports[0].ms}ms</span>
+      </div>
+    </div>`;
+}
+
+function setFilter(f) { 
+  filterMode = f; 
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText.toLowerCase().includes(f)));
+  renderCards(); 
+}
+function renderCards() {
+    const grid = document.getElementById('hosts-grid');
+    const query = document.getElementById('search-box').value.toLowerCase();
+    
+    grid.innerHTML = discovered
+    .filter(h => filterMode === 'all' || h.ports.some(p => p.ms < 200))
+    .filter(h => h.ip.includes(query) || (h.hostname && h.hostname.toLowerCase().includes(query)))
+    .map(h => buildCard(h)).join('');
+}
+
+// PiP Controller
+function togglePip(forceState) {
+    const win = document.getElementById('pip-window');
+    const frame = document.getElementById('pip-frame');
+    const isOpen = forceState !== undefined ? !forceState : win.style.display === 'block';
+
+    if (isOpen) {
+        win.style.display = 'none';
+        frame.src = '';
+        localStorage.setItem('dash_pip_open', 'false');
+    } else {
+        win.style.display = 'block';
+        frame.src = 'links.html'; // Showing links first as requested
+        localStorage.setItem('dash_pip_open', 'true');
+    }
+}
+
+if (localStorage.getItem('dash_pip_open') === 'true') {
+    togglePip(true);
+}
+</script>
+</body>
+</html>
