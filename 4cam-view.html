@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoDash · Security 4-Cam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #04060a;
+      --accent: #3b82f6;
+      --border: rgba(255,255,255,0.1);
+    }
+    body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+    
+    header {
+      position: absolute; top: 0; left: 0; width: 100%; height: 60px;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+      display: flex; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--border);
+      z-index: 100; justify-content: space-between;
+    }
+    .back-btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.8rem; font-weight: 700; }
+    
+    .cam-container {
+      display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+      height: 100vh; width: 100vw; padding-top: 60px; box-sizing: border-box;
+    }
+    .cam-item { border: 1px solid var(--border); background: #000; position: relative; }
+    .cam-item iframe { width: 100%; height: 100%; border: none; }
+    .cam-title {
+      position: absolute; top: 15px; left: 15px;
+      background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 4px;
+      font-size: 0.8rem; font-family: 'JetBrains Mono'; border: 1px solid rgba(255,255,255,0.2);
+    }
+    .cam-status { position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 700; color: #4ade80; }
+    .status-pulse { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <a href="index.html" class="back-btn">← BACK TO DASH</a>
+      <h1 style="font-size: 1rem; margin: 0;">SECURITY MATRIX :: 4-CHANNEL RTSP</h1>
+    </div>
+    <div style="font-family: 'JetBrains Mono'; font-size: 0.8rem; opacity: 0.6;" id="clock">00:00:00</div>
+  </header>
+
+  <div class="cam-container">
+    <div class="cam-item">
+      <iframe src="about:blank"></iframe>
+      <div class="cam-title">CAM_01 :: NORTH_PERIMETER</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe src="about:blank"></iframe>
+      <div class="cam-title">CAM_02 :: SOUTH_PERIMETER</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe src="about:blank"></iframe>
+      <div class="cam-title">CAM_03 :: ENTRANCE_MAIN</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe src="about:blank"></iframe>
+      <div class="cam-title">CAM_04 :: INTERNAL_OFFICE</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "_comment": "AutoDash Known Device Registry. Add devices here to pre-authorize them. Devices listed here will show GREEN (known) instead of ORANGE (unknown) when discovered on the network.",
+  "devices": [
+    {
+      "ip": "192.168.1.254",
+      "label": "Gateway Router",
+      "type": "router",
+      "icon": "🌐",
+      "notes": "Primary network gateway"
+    },
+    {
+      "ip": "192.168.1.253",
+      "label": "DNS Server",
+      "type": "server",
+      "icon": "📡",
+      "notes": "Local DNS resolver"
+    },
+    {
+      "ip": "192.168.1.250",
+      "label": "NVR / CCTV",
+      "type": "camera",
+      "icon": "📹",
+      "notes": "Network Video Recorder"
+    }
+  ]
+}

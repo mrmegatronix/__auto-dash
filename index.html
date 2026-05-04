@@ -3,409 +3,493 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoDash · Network Discovery</title>
+  <title>AutoDash · Network Command & Security</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #080c14;
-      --bg2:       #0d1320;
-      --bg3:       #111827;
-      --surface:   #141c2e;
-      --surface2:  #1a2540;
-      --border:    rgba(99,179,255,0.12);
-      --border2:   rgba(99,179,255,0.22);
-      --accent:    #3b82f6;
-      --accent2:   #60a5fa;
-      --accent3:   #93c5fd;
-      --green:     #22c55e;
-      --green2:    #4ade80;
-      --yellow:    #f59e0b;
-      --red:       #ef4444;
-      --text:      #e2e8f0;
-      --text2:     #94a3b8;
-      --text3:     #64748b;
-      --radius:    14px;
-      --radius-sm: 8px;
+      --bg: #04060a;
+      --bg2: #080c14;
+      --surface: #0e1422;
+      --border: rgba(99,179,255,0.12);
+      --accent: #3b82f6;
+      --sec: #f43f5e;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --grey: #475569;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --radius: 12px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      min-height: 100vh;
-      font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
-      overflow-x: hidden;
-    }
-
-    /* Animated background grid */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    #app {
-      position: relative;
-      z-index: 1;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 28px 24px 60px;
-    }
-
-    header {
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
+      flex-direction: column;
+      border: 0px solid transparent;
+      transition: border 0.3s;
+    }
+
+    /* Edge Alerts */
+    .alert-orange { border: 12px solid var(--orange) !important; animation: edge-blink 1s infinite; }
+    .alert-red { border: 12px solid var(--red) !important; animation: edge-blink 0.5s infinite; }
+    @keyframes edge-blink { 0%, 100% { border-color: transparent; } 50% { border-color: inherit; } }
+
+    /* Top Banner */
+    #top-banner {
+      position: absolute; top: -200px; left: 0; width: 100%; height: 180px;
+      background: var(--surface); border-bottom: 2px solid var(--accent);
+      z-index: 1000; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; padding: 15px 30px; gap: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    }
+    #top-banner.active { transform: translateY(200px); }
+    .banner-controls { display: flex; flex-direction: column; gap: 10px; width: 220px; }
+    .cam-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+    .cam-box { background: #000; border-radius: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; cursor: pointer; }
+    .cam-box iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+    .cam-label { position: absolute; bottom: 5px; left: 8px; font-size: 0.65rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+
+    header { display: flex; align-items: center; padding: 20px 40px; gap: 30px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { font-size: 1.5rem; }
+    .brand h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+
+    .nav-tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 8px; }
+    .tab { padding: 6px 16px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: var(--text2); text-decoration: none; }
+    .tab.active { background: var(--accent); color: white; }
+
+    main { flex: 1; padding: 30px 40px; display: flex; flex-direction: column; gap: 25px; position: relative; }
+
+    /* Controls Panel */
+    .controls-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+    .btn-p { background: var(--accent); color: white; }
+    .btn-s { background: var(--surface); color: var(--text2); border: 1px solid var(--border); }
+    .btn:hover { transform: translateY(-2px); }
+
+    .preset-info { font-size: 0.75rem; color: var(--text3); font-family: 'JetBrains Mono'; background: var(--bg); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); }
+
+    /* View Switcher */
+    .view-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    
+    /* GRID VIEW (254 Icons) */
+    #grid-view {
+      display: grid;
+      grid-template-columns: repeat(20, 1fr);
+      gap: 8px;
+      justify-content: center;
+      padding: 10px;
+    }
+    .device-cell {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      background: #000;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 36px;
-      flex-wrap: wrap;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: 0.3s;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-icon {
-      width: 42px; height: 42px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-      box-shadow: 0 0 15px rgba(59,130,246,0.3);
-      display: flex; align-items: center; justify-content: center;
+    .device-cell:hover { transform: scale(1.1); z-index: 10; border-color: var(--accent); }
+    .cell-ip { font-size: 0.5rem; font-family: 'JetBrains Mono'; opacity: 0.5; margin-top: 2px; }
+    .cell-dot { width: 12px; height: 12px; border-radius: 50%; background: #222; }
+    
+    /* Cell States */
+    .state-known { background: rgba(34, 197, 94, 0.2); border-color: var(--green); }
+    .state-known .cell-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    
+    .state-unknown { background: rgba(245, 158, 11, 0.2); border-color: var(--orange); animation: cell-blink 1s infinite; }
+    .state-unknown .cell-dot { background: var(--orange); box-shadow: 0 0 10px var(--orange); }
+    
+    .state-risk { background: rgba(244, 63, 94, 0.15); border-color: var(--sec); animation: cell-blink 0.8s infinite; }
+    .state-risk .cell-dot { background: var(--sec); box-shadow: 0 0 12px var(--sec); }
+    
+    .state-offline-anim { background: rgba(239, 68, 68, 0.2); border-color: var(--red); animation: cell-blink 0.5s infinite; }
+    .state-offline-anim .cell-dot { background: var(--red); box-shadow: 0 0 10px var(--red); }
+    
+    .state-offline { background: #1a1a1a; border-color: var(--grey); }
+    .state-offline .cell-dot { background: var(--grey); }
+    
+    .state-dead { background: #000; border-color: #111; }
+    .state-dead .cell-dot { background: #111; }
+
+    @keyframes cell-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Sidebar Panel */
+    #details-panel {
+      position: fixed; right: 0; top: 0; width: 380px; height: 100vh;
+      background: var(--bg2); border-left: 2px solid var(--accent);
+      padding: 30px 25px; display: none; overflow-y: auto;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.6); z-index: 2000;
+      animation: sideIn 0.3s ease;
     }
-    .brand-text h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #93c5fd, #60a5fa, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    #details-panel.sec-border { border-color: var(--sec); }
+    @keyframes sideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    .port-links { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+    .port-link-card { 
+      padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); 
+      border-radius: 8px; text-decoration: none; color: var(--text); display: flex;
+      flex-direction: column; gap: 4px; transition: 0.2s;
     }
+    .port-link-card:hover { border-color: var(--accent); transform: translateX(-4px); }
+    .port-risky { border-color: var(--sec) !important; }
+    .risk-tag { font-size: 0.55rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; display: inline-block; width: fit-content; }
+    .risk-high { background: var(--sec); color: white; }
+    .risk-med { background: var(--orange); color: #000; }
+    .risk-low { background: var(--green); color: #000; }
+    .risk-critical { background: #7f1d1d; color: white; }
+    .det-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .det-section h4 { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .svc-match { padding: 8px; background: rgba(59,130,246,0.1); border: 1px solid var(--accent); border-radius: 6px; font-size: 0.75rem; margin-top: 6px; }
 
-    .nav-bar {
-      display: flex; gap: 5px; background: var(--surface); padding: 5px;
-      border-radius: 12px; border: 1px solid var(--border);
-    }
-    .nav-link {
-      padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
-      color: var(--text2); text-decoration: none; transition: all 0.2s;
-    }
-    .nav-link:hover { color: var(--text); background: var(--surface2); }
-    .nav-link.active { color: #fff; background: var(--accent); }
+    /* List View (Original Cards) */
+    #list-view { display: none; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; overflow-y: auto; padding-right: 10px; }
+    .host-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 
-    .status-pill {
-      display: flex; align-items: center; gap: 8px; padding: 6px 14px;
-      border-radius: 100px; background: var(--surface); border: 1px solid var(--border);
-      font-size: 0.8rem; color: var(--text2); font-family: 'JetBrains Mono', monospace;
-    }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
-    .status-dot.scanning { background: var(--accent2); box-shadow: 0 0 8px var(--accent); animation: pulse 1.2s infinite; }
-    .status-dot.done { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .stats-floating { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 15px; }
+    .stat-chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: flex; gap: 8px; align-items: center; }
 
-    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
-    .stat-card {
-      flex: 1; min-width: 130px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;
-    }
-    .stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
-    .stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
-
-    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
-    .input-group {
-      display: flex; align-items: center; gap: 8px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 14px;
-    }
-    .input-group input, .input-group select {
-      background: none; border: none; color: var(--text); font-family: 'JetBrains Mono', monospace;
-      padding: 10px 0; outline: none; width: 170px;
-    }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px;
-      border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;
-    }
-    .btn-primary { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; }
-    .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-
-    .progress-wrap { height: 3px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 28px; }
-    .progress-bar { height: 100%; background: var(--accent); transition: width 0.15s; }
-
-    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 22px; }
-    .chip { padding: 5px 13px; border-radius: 100px; font-size: 0.78rem; font-weight: 600; background: var(--surface); border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
-    .chip.active { background: var(--accent); color: #fff; }
-    #search-box { margin-left: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 14px; color: var(--text); }
-
-    #hosts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-
-    .host-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 20px; display: flex; flex-direction: column; gap: 14px; animation: fadeUp 0.35s ease both;
-    }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .card-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface2); }
-    .card-title-wrap { flex: 1; min-width: 0; }
-    .card-ip { font-family: 'JetBrains Mono', monospace; font-size: 0.98rem; font-weight: 600; color: var(--accent3); }
-    .card-hostname { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
-
-    .badge { padding: 3px 9px; border-radius: 100px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-    .badge-up { background: rgba(34,197,94,0.15); color: var(--green2); }
-    .badge-slow { background: rgba(245,158,11,0.15); color: var(--yellow); }
-
-    .ports-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .port-tag {
-      padding: 4px 10px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--border);
-      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text2); text-decoration: none;
+    #banner-toggle {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: white; padding: 4px 20px;
+      border-radius: 0 0 10px 10px; cursor: pointer; font-weight: 800; font-size: 0.7rem;
+      z-index: 1100;
     }
 
-    .meta-row { display: flex; justify-content: space-between; gap: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
-    .meta-item { font-size: 0.7rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-
-    #scan-log { background: var(--bg2); border-radius: var(--radius); padding: 12px; margin-top: 20px; max-height: 150px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--text3); }
-
-    /* PiP Styling */
-    .pip-toggle {
-        position: fixed; bottom: 30px; left: 30px; z-index: 5000;
-        background: var(--accent); color: white; border: none;
-        padding: 12px 24px; border-radius: 50px; font-weight: 800; cursor: pointer;
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); font-size: 0.8rem;
-        display: flex; align-items: center; gap: 8px; transition: 0.2s;
-    }
-    .pip-toggle:hover { transform: scale(1.05); }
-    .pip-window {
-        position: fixed; bottom: 90px; left: 30px; width: 350px; height: 200px;
-        background: #000; border: 2px solid var(--accent); border-radius: 15px;
-        z-index: 5000; overflow: hidden; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        animation: pipIn 0.3s ease;
-    }
-    @keyframes pipIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .pip-window iframe { width: 100%; height: 100%; border: none; }
+    #scan-log { position: fixed; bottom: 30px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; }
   </style>
 </head>
-<body>
-<div id="app">
+<body id="main-body">
+
+  <div id="banner-toggle" onclick="toggleBanner()">CAM & CONTROLS ▼</div>
+
+  <div id="top-banner">
+    <div class="banner-controls">
+      <h3 style="font-size: 0.9rem; color: var(--accent);">BANNER CONTROL</h3>
+      <div class="btn btn-s" style="font-size: 0.7rem;" onclick="location.href='4cam-view.html'">🖥️ FULL 4-CAM VIEW</div>
+      <div class="btn btn-s" style="font-size: 0.7rem;" onclick="resetAllDevices()">🔄 RESET CACHE</div>
+      <div style="font-size: 0.65rem; color: var(--text3); margin-top: auto;">AutoDash v2.0 - Network Command</div>
+    </div>
+    <div class="cam-grid">
+      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 01 - NORTH</div></div>
+      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 02 - SOUTH</div></div>
+      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 03 - ENTRANCE</div></div>
+      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 04 - OFFICE</div></div>
+    </div>
+  </div>
+
   <header>
     <div class="brand">
-      <div class="brand-icon">🌐</div>
-      <div class="brand-text"><h1>AutoDash</h1></div>
+      <div class="brand-icon">🛡️</div>
+      <h1 id="brand-title">AutoDash Command</h1>
     </div>
-    <nav class="nav-bar">
-      <a href="index.html" class="nav-link active">Scanner</a>
-      <a href="links.html" class="nav-link">Quick Links</a>
-    </nav>
-    <div class="status-pill"><span class="status-dot" id="status-dot"></span><span id="status-text">Ready</span></div>
+    <div class="nav-tabs">
+      <a href="index.html" class="tab active" id="tab-net">Network</a>
+      <div class="tab" onclick="toggleSecMode()" id="tab-sec">Security</div>
+      <a href="links.html" class="tab">Intel Hub</a>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 15px;">
+      <div class="stat-chip" style="border-color: var(--green);"><span style="color: var(--green)">●</span> <span id="count-online">0</span> ONLINE</div>
+      <div class="stat-chip" style="border-color: var(--sec);"><span style="color: var(--sec)">●</span> <span id="count-risk">0</span> AT RISK</div>
+      <div class="stat-chip" style="border-color: var(--orange);"><span style="color: var(--orange)">●</span> <span id="count-unknown">0</span> UNKNOWN</div>
+    </div>
   </header>
 
-  <div class="stats-bar">
-    <div class="stat-card"><div class="stat-label">Scanned</div><div class="stat-value" id="stat-scanned">0</div></div>
-    <div class="stat-card"><div class="stat-label">Found</div><div class="stat-value" id="stat-found">0</div></div>
-    <div class="stat-card"><div class="stat-label">Ports</div><div class="stat-value" id="stat-ports">0</div></div>
-  </div>
+  <main>
+    <div class="controls-row">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 0.65rem; color: var(--text3); font-weight: 800; text-transform: uppercase;">IP Range</label>
+        <input type="text" id="subnet-input" value="192.168.1" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono';">
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 0.65rem; color: var(--text3); font-weight: 800; text-transform: uppercase;">Scan Preset</label>
+        <select id="port-preset" onchange="updatePresetInfo()" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px;">
+          <option value="common">Standard Scan</option>
+          <option value="web">Web Discovery</option>
+          <option value="extended">Infrastructure</option>
+          <option value="intensive">Deep Scan</option>
+          <option value="security">🔴 Security Audit</option>
+        </select>
+      </div>
+      
+      <div id="preset-details" class="preset-info">Ports: 22, 80, 443, 8080...</div>
 
-  <div class="controls">
-    <div class="input-group"><label>Subnet</label><input id="subnet-input" type="text" value="192.168.1"></div>
-    <div class="input-group">
-      <select id="port-preset">
-        <option value="common">Common Ports</option>
-        <option value="web">Web Ports</option>
-        <option value="extended">Extended (Dev + DB)</option>
-        <option value="intensive">Intensive (Top 100)</option>
-      </select>
+      <div style="margin-left: auto; display: flex; gap: 10px;">
+        <button class="btn btn-s" onclick="toggleView()">VIEW: <span id="view-mode-label">GRID</span></button>
+        <button class="btn btn-p" onclick="startScan()" id="scan-btn">⚡ RUN SCAN</button>
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="startScan()" id="scan-btn">Scan Now</button>
-    <button class="btn btn-secondary" onclick="stopScan()" id="stop-btn" style="display:none">Stop</button>
-  </div>
 
-  <div class="progress-wrap hidden" id="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div class="view-container">
+      <div id="grid-view"></div>
+      <div id="list-view"></div>
+    </div>
 
-  <div class="toolbar">
-    <button class="chip active" onclick="setFilter('all')">All</button>
-    <button class="chip" onclick="setFilter('fast')">⚡ Fast</button>
-    <input type="text" id="search-box" placeholder="🔍 Search IP or Hostname…" oninput="renderCards()">
-  </div>
+    <div id="details-panel">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+        <div>
+          <h2 id="det-ip" style="font-family: 'JetBrains Mono'; font-size: 1.4rem;">192.168.1.1</h2>
+          <p id="det-host" style="color: var(--text2); font-size: 0.8rem;">Resolving...</p>
+        </div>
+        <button onclick="closeDetails()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">×</button>
+      </div>
+      <div id="det-info" style="font-size: 0.75rem; color: var(--text3); display: flex; flex-direction: column; gap: 5px;"></div>
+      <div class="port-links" id="det-links"></div>
+    </div>
 
-  <div id="hosts-grid"></div>
-  <div id="scan-log"></div>
+    <div id="scan-log"></div>
 
-  <!-- PiP Elements -->
-  <div id="pip-window" class="pip-window">
-      <iframe id="pip-frame" src=""></iframe>
-  </div>
-  <button class="pip-toggle" onclick="togglePip()">
-      <span style="font-size: 1.2rem;">🖼️</span> 
-      <span>LIVE LINKS</span>
-  </button>
-</div>
+    <div class="stats-floating">
+      <div class="stat-chip">DNS: <span id="info-dns" style="color: var(--accent);">8.8.8.8</span></div>
+      <div class="stat-chip">ARP: <span id="info-arp" style="color: var(--text2);">Active</span></div>
+      <div class="stat-chip">NET: <span id="info-net" style="color: var(--text2);">192.168.1.0/24</span></div>
+    </div>
+  </main>
 
 <script>
 const PORT_PRESETS = {
-  common: [22, 80, 443, 8080, 8443, 3000, 3001],
-  web: [80, 443, 8000, 8080, 8443, 8888, 9000, 9443],
-  extended: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379, 8081, 9000, 9090, 27017],
-  intensive: [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 548, 587, 631, 993, 995, 1025, 1723, 1883, 2049, 3000, 3001, 3128, 3306, 3389, 4000, 5000, 5060, 5173, 5432, 5900, 5984, 6379, 8000, 8008, 8080, 8081, 8443, 8888, 9000, 9090, 9100, 9443, 27017]
+  common: [22, 80, 443, 8080, 8443, 3000],
+  web: [80, 443, 8000, 8080, 8443, 8888, 9000],
+  extended: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379],
+  intensive: [21,22,23,25,53,80,110,111,135,139,143,443,445,548,587,631,993,995,1025,1723,1883,2049,3000,3001,3128,3306,3389,5000,5060,5432,5900,6379,8000,8080,9000,27017],
+  security: [21,22,23,25,53,80,110,135,139,143,443,445,587,993,995,1433,1723,3306,3389,5060,5432,5900,8080,8443,27017]
+};
+const PORT_INTEL = {
+  21:{n:'FTP',r:'HIGH',d:'Unencrypted file transfer'},22:{n:'SSH',r:'MED',d:'Secure shell'},23:{n:'Telnet',r:'CRITICAL',d:'Unencrypted remote login'},25:{n:'SMTP',r:'MED',d:'Email relay'},53:{n:'DNS',r:'MED',d:'Domain resolver'},80:{n:'HTTP',r:'LOW',d:'Web server'},110:{n:'POP3',r:'HIGH',d:'Unencrypted mail'},111:{n:'RPCBind',r:'HIGH',d:'RPC services'},135:{n:'MSRPC',r:'HIGH',d:'Windows RPC'},139:{n:'NetBIOS',r:'HIGH',d:'Windows shares'},143:{n:'IMAP',r:'MED',d:'Email access'},443:{n:'HTTPS',r:'LOW',d:'Encrypted web'},445:{n:'SMB',r:'CRITICAL',d:'File sharing - WannaCry vector'},548:{n:'AFP',r:'MED',d:'Apple filing'},587:{n:'SMTP-Sub',r:'LOW',d:'Mail submission'},631:{n:'CUPS',r:'MED',d:'Print server'},993:{n:'IMAPS',r:'LOW',d:'Secure IMAP'},995:{n:'POP3S',r:'LOW',d:'Secure POP3'},1433:{n:'MSSQL',r:'CRITICAL',d:'Microsoft SQL'},1723:{n:'PPTP',r:'HIGH',d:'VPN - known exploits'},1883:{n:'MQTT',r:'HIGH',d:'IoT messaging'},2049:{n:'NFS',r:'HIGH',d:'Network filesystem'},3000:{n:'Dev',r:'MED',d:'Dev server'},3001:{n:'Dev-Alt',r:'MED',d:'Dev server alt'},3128:{n:'Proxy',r:'MED',d:'HTTP proxy'},3306:{n:'MySQL',r:'HIGH',d:'Database'},3389:{n:'RDP',r:'CRITICAL',d:'Remote Desktop'},5000:{n:'UPnP',r:'HIGH',d:'Universal PnP'},5060:{n:'SIP',r:'HIGH',d:'VoIP'},5432:{n:'Postgres',r:'HIGH',d:'Database'},5900:{n:'VNC',r:'CRITICAL',d:'Remote screen'},6379:{n:'Redis',r:'HIGH',d:'In-memory DB'},8000:{n:'Web-Alt',r:'LOW',d:'Alt web'},8080:{n:'HTTP-Proxy',r:'LOW',d:'Alt web/proxy'},8443:{n:'HTTPS-Alt',r:'LOW',d:'Alt secure web'},9000:{n:'Portainer',r:'MED',d:'Container mgmt'},27017:{n:'MongoDB',r:'CRITICAL',d:'NoSQL database'}
 };
 
-const PORT_NAMES = { 
-  21: 'FTP', 22: 'SSH', 23: 'Telnet', 25: 'SMTP', 53: 'DNS', 80: 'HTTP', 110: 'POP3', 143: 'IMAP', 
-  443: 'HTTPS', 445: 'SMB', 1883: 'MQTT', 3000: 'NodeJS', 3306: 'MySQL', 3389: 'RDP', 
-  5000: 'Flask', 5432: 'Postgres', 6379: 'Redis', 8080: 'Web-Alt', 8443: 'SSL-Alt', 
-  9000: 'Portainer', 27017: 'MongoDB' 
-};
+let devices = [], knownIps = JSON.parse(localStorage.getItem('dash_known_ips')||'[]');
+let knownRegistry = [], serviceApps = [];
+let viewMode = 'GRID', scanning = false, abortCtl = null, secMode = false;
 
-let discovered = [], scanning = false, abortCtl = null, doneProbes = 0, totalProbes = 0, filterMode = 'all';
+// Load external registries
+async function loadRegistries() {
+  try {
+    const r = await fetch('known-devices.json'); const j = await r.json();
+    knownRegistry = j.devices || [];
+    knownRegistry.forEach(d => { if (!knownIps.includes(d.ip)) knownIps.push(d.ip); });
+    localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
+    log(`Loaded ${knownRegistry.length} known devices from registry`);
+  } catch(e) { log('known-devices.json not found, using localStorage only'); }
+  try {
+    const r = await fetch('service-apps.json'); serviceApps = await r.json();
+    log(`Loaded ${serviceApps.length} service signatures`);
+  } catch(e) { log('service-apps.json not found'); }
+}
 
-function isHttps(p) { return [443, 8443, 9443, 4443].includes(p); }
-function portUrl(ip, p) { return `${isHttps(p)?'https':'http'}://${ip}:${p}`; }
+function getRegistryDevice(ip) { return knownRegistry.find(d => d.ip === ip); }
+
+function matchServices(ports) {
+  if (!serviceApps.length || !ports.length) return [];
+  return serviceApps.filter(app => {
+    if (!app.port) return false;
+    const appPorts = String(app.port).split(',').map(p => parseInt(p.trim()));
+    return appPorts.some(p => ports.includes(p));
+  }).slice(0, 5);
+}
+
+function getRisk(port) { return PORT_INTEL[port] || { n: `Port ${port}`, r: 'LOW', d: 'Unknown service' }; }
+function riskClass(r) { return r === 'CRITICAL' ? 'risk-critical' : r === 'HIGH' ? 'risk-high' : r === 'MED' ? 'risk-med' : 'risk-low'; }
+
+function hasHighRisk(ports) { return ports.some(p => { const i = PORT_INTEL[p]; return i && (i.r === 'HIGH' || i.r === 'CRITICAL'); }); }
+
+function initDevices() {
+  const subnet = document.getElementById('subnet-input').value;
+  devices = Array.from({length: 254}, (_, i) => ({
+    ip: `${subnet}.${i+1}`, id: i+1, status: 'DEAD', hostname: null, ports: [],
+    lastSeen: localStorage.getItem(`last_seen_${i+1}`) || null
+  }));
+  renderGrid();
+}
+
+function renderGrid() {
+  const c = document.getElementById('grid-view');
+  c.innerHTML = devices.map(d => {
+    let sc = 'state-dead';
+    if (d.status === 'ONLINE') sc = hasHighRisk(d.ports) && secMode ? 'state-risk' : 'state-known';
+    if (d.status === 'UNKNOWN') sc = 'state-unknown';
+    if (d.status === 'OFFLINE_ANIM') sc = 'state-offline-anim';
+    if (d.status === 'OFFLINE') sc = 'state-offline';
+    if (d.lastSeen && Date.now() - new Date(d.lastSeen).getTime() > 86400000) sc = 'state-dead';
+    const reg = getRegistryDevice(d.ip);
+    const label = reg ? reg.icon : '';
+    return `<div class="device-cell ${sc}" onclick="showDetails(${d.id})" id="cell-${d.id}" title="${d.ip}${reg ? ' - '+reg.label : ''}">
+      <div class="cell-dot"></div><div class="cell-ip">${label}.${d.id}</div></div>`;
+  }).join('');
+}
 
 async function startScan() {
-  if (scanning) return;
-  scanning = true; discovered = []; doneProbes = 0;
-  abortCtl = new AbortController();
-  setStatus('scanning');
-  document.getElementById('scan-btn').disabled = true;
-  document.getElementById('stop-btn').style.display = '';
-  document.getElementById('progress-wrap').classList.remove('hidden');
-  document.getElementById('hosts-grid').innerHTML = '';
-  
-  const subnet = document.getElementById('subnet-input').value;
+  if (scanning) { abortCtl.abort(); finishScan(); return; }
+  scanning = true; abortCtl = new AbortController();
+  document.getElementById('scan-btn').textContent = '⏹ STOP SCAN';
+  log('Starting subnet scan...');
   const ports = PORT_PRESETS[document.getElementById('port-preset').value];
-  const hosts = Array.from({length: 254}, (_, i) => `${subnet}.${i+1}`);
-  totalProbes = hosts.length * ports.length;
-
-  const BATCH_SIZE = 30; 
-  for (let i = 0; i < hosts.length; i++) {
+  const BS = 15;
+  for (let i = 0; i < devices.length; i++) {
     if (abortCtl.signal.aborted) break;
-    const ip = hosts[i];
-    
-    // Process ports in smaller parallel batches to avoid browser hanging
-    for (let j = 0; j < ports.length; j += BATCH_SIZE) {
-        const batch = ports.slice(j, j + BATCH_SIZE);
-        await Promise.all(batch.map(async p => {
-            const start = Date.now();
-            try {
-                const ac = new AbortController();
-                const tid = setTimeout(() => ac.abort(), 1200);
-                await fetch(portUrl(ip, p), { mode:'no-cors', signal: ac.signal });
-                clearTimeout(tid);
-                mergeHost(ip, { port: p, ms: Date.now() - start });
-            } catch(e) {}
-            doneProbes++;
-            updateProgress();
-        }));
+    const d = devices[i]; let found = false;
+    for (let j = 0; j < ports.length; j += BS) {
+      const batch = ports.slice(j, j+BS);
+      await Promise.all(batch.map(async p => {
+        try {
+          const ac = new AbortController();
+          const t = setTimeout(() => ac.abort(), 1000);
+          await fetch(`http://${d.ip}:${p}`, {mode:'no-cors', signal:ac.signal});
+          clearTimeout(t);
+          if (!d.ports.includes(p)) d.ports.push(p);
+          found = true;
+        } catch(e) {}
+      }));
     }
-    document.getElementById('stat-scanned').textContent = i + 1;
+    found ? handleDeviceOnline(d) : handleDeviceOffline(d);
+    if (i % 10 === 0) renderGrid();
+    updateStats();
   }
   finishScan();
 }
 
-function stopScan() { if (abortCtl) abortCtl.abort(); finishScan(); }
-function finishScan() {
-  scanning = false;
-  document.getElementById('scan-btn').disabled = false;
-  document.getElementById('stop-btn').style.display = 'none';
-  document.getElementById('progress-wrap').classList.add('hidden');
-  setStatus('done');
+function handleDeviceOnline(d) {
+  const was = d.status==='DEAD'||d.status==='OFFLINE'||d.status==='OFFLINE_ANIM';
+  const known = knownIps.includes(d.ip);
+  if (was) {
+    d.status = known ? 'ONLINE' : 'UNKNOWN';
+    speak(known ? "Known device online: "+d.ip : "Unknown device connected");
+    if (!known) triggerEdgeAlert('orange');
+    log(`Device Up: ${d.ip} (${known?'Known':'UNKNOWN'})`);
+  }
+  d.lastSeen = new Date().toISOString();
+  localStorage.setItem(`last_seen_${d.id}`, d.lastSeen);
 }
 
-function setStatus(s) { document.getElementById('status-dot').className = 'status-dot ' + s; document.getElementById('status-text').textContent = s; }
-function updateProgress() { document.getElementById('progress-bar').style.width = (doneProbes / totalProbes * 100) + '%'; }
-
-function mergeHost(ip, data) {
-  let h = discovered.find(x => x.ip === ip);
-  if (!h) { h = { ip, ports:[], firstSeen: new Date().toLocaleTimeString(), mac: 'Restricted (Browser)' }; discovered.push(h); }
-  if (!h.ports.find(x => x.port === data.port)) h.ports.push(data);
-  h.ports.sort((a,b) => a.port - b.port);
-  updateCard(h);
-  resolveMetadata(h, data.port);
+function handleDeviceOffline(d) {
+  if (d.status==='ONLINE'||d.status==='UNKNOWN') {
+    d.status = 'OFFLINE_ANIM';
+    speak("Device offline", true); triggerEdgeAlert('red');
+    log(`Device Offline: ${d.ip}`, 'red');
+    setTimeout(() => { if (d.status==='OFFLINE_ANIM') { d.status='OFFLINE'; renderGrid(); } }, 60000);
+  }
 }
 
-async function resolveMetadata(h, p) {
-  const url = portUrl(h.ip, p);
-  const img = new Image(); img.onload = () => { h.favicon = url+'/favicon.ico'; updateCard(h); }; img.src = url+'/favicon.ico';
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
-    const text = await res.text();
-    const m = text.match(/<title>([^<]+)<\/title>/i);
-    if (m) { h.hostname = m[1].trim(); updateCard(h); }
-  } catch(e) {}
+function triggerEdgeAlert(c) {
+  const b = document.getElementById('main-body');
+  b.className = 'alert-'+c; setTimeout(() => b.className='', 5000);
 }
 
-function updateCard(h) {
-  const grid = document.getElementById('hosts-grid');
-  let el = document.getElementById('card-' + h.ip.replace(/\./g, '-'));
-  if (!el) { grid.insertAdjacentHTML('beforeend', `<div id="card-${h.ip.replace(/\./g, '-')}"></div>`); el = document.getElementById('card-' + h.ip.replace(/\./g, '-')); }
-  el.outerHTML = buildCard(h);
-  document.getElementById('stat-found').textContent = discovered.length;
-  document.getElementById('stat-ports').textContent = discovered.reduce((a, x) => a + x.ports.length, 0);
+function speak(text, female=false) {
+  const m = new SpeechSynthesisUtterance(text);
+  if (female) { const v = speechSynthesis.getVoices().find(v => v.name.includes('female')||v.lang.includes('GB')); if (v) m.voice=v; }
+  speechSynthesis.speak(m);
 }
 
-function buildCard(h) {
-  const title = h.hostname || h.ip;
-  const sub = h.hostname ? h.ip : `Discovered: ${h.firstSeen}`;
-  const icon = h.favicon ? `<img src="${h.favicon}" width="24">` : '🌐';
-  return `
-    <div class="host-card" id="card-${h.ip.replace(/\./g, '-')}">
-      <div class="card-header">
-        <div class="card-icon">${icon}</div>
-        <div class="card-title-wrap">
-          <div class="card-ip">${title}</div>
-          <div class="card-hostname">${sub}</div>
+function toggleBanner() { document.getElementById('top-banner').classList.toggle('active'); }
+function toggleView() {
+  viewMode = viewMode==='GRID'?'LIST':'GRID';
+  document.getElementById('view-mode-label').textContent = viewMode;
+  document.getElementById('grid-view').style.display = viewMode==='GRID'?'grid':'none';
+  document.getElementById('list-view').style.display = viewMode==='LIST'?'grid':'none';
+  if (viewMode==='LIST') renderList();
+}
+
+function toggleSecMode() {
+  secMode = !secMode;
+  document.getElementById('tab-sec').classList.toggle('active', secMode);
+  document.getElementById('brand-title').textContent = secMode ? 'Security Audit' : 'AutoDash Command';
+  document.body.style.setProperty('--accent', secMode ? '#f43f5e' : '#3b82f6');
+  renderGrid(); updateStats();
+  log(secMode ? '🔴 Security Audit Mode ENABLED' : '🔵 Network Mode restored');
+}
+
+function showDetails(id) {
+  const d = devices[id-1], panel = document.getElementById('details-panel');
+  const reg = getRegistryDevice(d.ip);
+  document.getElementById('det-ip').textContent = d.ip;
+  document.getElementById('det-host').textContent = reg ? `${reg.icon} ${reg.label}` : (d.hostname || 'Unknown Host');
+
+  const info = document.getElementById('det-info');
+  const riskPorts = d.ports.filter(p => PORT_INTEL[p] && (PORT_INTEL[p].r==='HIGH'||PORT_INTEL[p].r==='CRITICAL'));
+  info.innerHTML = `
+    <span>Status: <b style="color:${d.status==='ONLINE'?'var(--green)':d.status==='UNKNOWN'?'var(--orange)':'var(--red)'}">${d.status}</b></span>
+    <span>Last Seen: ${d.lastSeen ? new Date(d.lastSeen).toLocaleString() : 'Never'}</span>
+    <span>Known: ${knownIps.includes(d.ip)?'✅ YES':'❌ NO'}</span>
+    ${reg ? `<span>Type: ${reg.type} — ${reg.notes}</span>` : ''}
+    ${riskPorts.length ? `<span style="color:var(--sec)">⚠ ${riskPorts.length} risky port(s) open</span>` : ''}
+  `;
+
+  const links = document.getElementById('det-links');
+  links.innerHTML = '<h4 style="font-size:0.7rem;color:var(--text2);margin-bottom:8px;">OPEN PORTS</h4>' +
+    d.ports.map(p => {
+      const pi = getRisk(p); const rc = riskClass(pi.r);
+      return `<a href="http://${d.ip}:${p}" target="_blank" class="port-link-card ${pi.r==='HIGH'||pi.r==='CRITICAL'?'port-risky':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'JetBrains Mono';font-size:0.85rem">${p} — ${pi.n}</span>
+          <span class="risk-tag ${rc}">${pi.r}</span>
         </div>
-        <span class="badge badge-up">UP</span>
-      </div>
-      <div class="ports-row">
-        ${h.ports.map(p => {
-          const name = PORT_NAMES[p.port] ? ` <span style='opacity:0.6'>${PORT_NAMES[p.port]}</span>` : '';
-          return `<span class="port-tag">${p.port}${name}</span>`;
-        }).join('')}
-      </div>
-      <div class="meta-row">
-        <span class="meta-item">MAC: ${h.mac}</span>
-        <span class="meta-item">${h.ports[0].ms}ms</span>
-      </div>
-    </div>`;
+        <span style="font-size:0.65rem;color:var(--text2)">${pi.d}</span>
+      </a>`;
+    }).join('');
+
+  // Service matches
+  const svcs = matchServices(d.ports);
+  if (svcs.length) {
+    links.innerHTML += '<div class="det-section"><h4>Detected Services</h4>' +
+      svcs.map(s => `<div class="svc-match"><b>${s.name||s.Name}</b><br><span style="color:var(--text2)">${(s.description||s.Description||'').substring(0,120)}</span></div>`).join('') + '</div>';
+  }
+
+  if (!knownIps.includes(d.ip)) {
+    links.innerHTML += `<button class="btn btn-p" style="margin-top:15px;width:100%" onclick="markKnown('${d.ip}')">✅ MARK AS KNOWN</button>`;
+  }
+  panel.classList.toggle('sec-border', secMode);
+  panel.style.display = 'block';
 }
 
-function setFilter(f) { 
-  filterMode = f; 
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.innerText.toLowerCase().includes(f)));
-  renderCards(); 
-}
-function renderCards() {
-    const grid = document.getElementById('hosts-grid');
-    const query = document.getElementById('search-box').value.toLowerCase();
-    
-    grid.innerHTML = discovered
-    .filter(h => filterMode === 'all' || h.ports.some(p => p.ms < 200))
-    .filter(h => h.ip.includes(query) || (h.hostname && h.hostname.toLowerCase().includes(query)))
-    .map(h => buildCard(h)).join('');
+function markKnown(ip) {
+  if (!knownIps.includes(ip)) {
+    knownIps.push(ip); localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
+    log(`Device marked as Known: ${ip}`); closeDetails();
+    const d = devices.find(x=>x.ip===ip); if(d) d.status='ONLINE';
+    renderGrid(); updateStats();
+  }
 }
 
-// PiP Controller
-function togglePip(forceState) {
-    const win = document.getElementById('pip-window');
-    const frame = document.getElementById('pip-frame');
-    const isOpen = forceState !== undefined ? !forceState : win.style.display === 'block';
-
-    if (isOpen) {
-        win.style.display = 'none';
-        frame.src = '';
-        localStorage.setItem('dash_pip_open', 'false');
-    } else {
-        win.style.display = 'block';
-        frame.src = 'links.html'; // Showing links first as requested
-        localStorage.setItem('dash_pip_open', 'true');
-    }
+function closeDetails() { document.getElementById('details-panel').style.display = 'none'; }
+function log(m, col) {
+  const div = document.createElement('div'); div.style.color = col||'inherit';
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+  document.getElementById('scan-log').prepend(div);
 }
 
-if (localStorage.getItem('dash_pip_open') === 'true') {
-    togglePip(true);
+function updateStats() {
+  document.getElementById('count-online').textContent = devices.filter(d=>d.status==='ONLINE').length;
+  document.getElementById('count-unknown').textContent = devices.filter(d=>d.status==='UNKNOWN').length;
+  const atRisk = devices.filter(d=>(d.status==='ONLINE'||d.status==='UNKNOWN') && hasHighRisk(d.ports)).length;
+  document.getElementById('count-risk').textContent = atRisk;
 }
+
+function updatePresetInfo() {
+  const p = document.getElementById('port-preset').value;
+  document.getElementById('preset-details').textContent = 'Ports: ' + PORT_PRESETS[p].join(', ');
+}
+
+function finishScan() {
+  scanning = false; document.getElementById('scan-btn').textContent = '⚡ RUN SCAN';
+  log('Scan complete.'); renderGrid(); updateStats();
+}
+
+function resetAllDevices() { if(confirm('Clear all device history?')){localStorage.clear();location.reload();} }
+
+(async () => { await loadRegistries(); initDevices(); updatePresetInfo(); })();
 </script>
 </body>
 </html>
