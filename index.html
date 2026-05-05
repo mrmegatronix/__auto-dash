@@ -56,40 +56,43 @@
     .cam-box iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
     .cam-label { position: absolute; bottom: 5px; left: 8px; font-size: 0.65rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
 
-    header { display: flex; align-items: center; padding: 20px 40px; gap: 30px; background: var(--bg2); border-bottom: 1px solid var(--border); }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-icon { font-size: 1.5rem; }
-    .brand h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+    header { display: flex; align-items: center; padding: 8px 20px; gap: 12px; background: var(--bg2); border-bottom: none; flex-wrap: nowrap; }
+    .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .brand-icon { font-size: 1.2rem; }
+    .brand h1 { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
 
-    .nav-tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 8px; }
-    .tab { padding: 6px 16px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: var(--text2); text-decoration: none; }
+    .nav-tabs { display: flex; background: var(--bg); padding: 3px; border-radius: 6px; flex-shrink: 0; }
+    .tab { padding: 4px 12px; border-radius: 5px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; color: var(--text2); text-decoration: none; }
     .tab.active { background: var(--accent); color: white; }
 
-    main { flex: 1; padding: 30px 40px; display: flex; flex-direction: column; gap: 25px; position: relative; }
-
-    /* Controls Panel */
-    .controls-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-    .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+    .hdr-control { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .hdr-input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 0.75rem; width: 100px; }
+    .hdr-select { background: var(--bg); border: 1px solid var(--border); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; }
+    .btn { padding: 6px 14px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; font-size: 0.75rem; }
     .btn-p { background: var(--accent); color: white; }
     .btn-s { background: var(--surface); color: var(--text2); border: 1px solid var(--border); }
-    .btn:hover { transform: translateY(-2px); }
+    .btn:hover { transform: translateY(-1px); }
 
-    .preset-info { font-size: 0.75rem; color: var(--text3); font-family: 'JetBrains Mono'; background: var(--bg); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); }
+    /* WAN indicator with timestamp */
+    .wan-block { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .wan-time { font-size: 0.5rem; color: var(--text2); font-family: 'JetBrains Mono'; }
+
+    main { flex: 1; padding: 6px 12px; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
 
     /* View Switcher */
     .view-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
     
-    /* GRID VIEW (254 Icons) */
+    /* GRID VIEW (254 Icons) — fits all 254 on one 1080p page */
     #grid-view {
       display: grid;
-      grid-template-columns: repeat(20, 1fr);
-      gap: 8px;
-      justify-content: center;
-      padding: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+      gap: 3px;
+      padding: 4px;
+      flex: 1;
+      align-content: start;
     }
     .device-cell {
-      aspect-ratio: 1;
-      border-radius: 4px;
+      border-radius: 3px;
       background: #000;
       border: 1px solid var(--border);
       display: flex;
@@ -98,11 +101,23 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: 0.3s;
+      transition: 0.2s;
+      padding: 2px 0;
+      min-height: 32px;
     }
-    .device-cell:hover { transform: scale(1.1); z-index: 10; border-color: var(--accent); }
-    .cell-ip { font-size: 0.5rem; font-family: 'JetBrains Mono'; opacity: 0.5; margin-top: 2px; }
-    .cell-dot { width: 12px; height: 12px; border-radius: 50%; background: #222; }
+    .device-cell:hover { transform: scale(1.15); z-index: 10; border-color: var(--accent); box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+    .cell-ip { font-size: 0.55rem; font-family: 'JetBrains Mono'; opacity: 0.7; line-height: 1; }
+    .cell-dot { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-bottom: 1px; }
+
+    /* Scan Progress Bar */
+    #scan-progress { height: 3px; background: var(--surface); width: 100%; border-radius: 2px; overflow: hidden; }
+    #scan-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.3s; border-radius: 2px; }
+
+    /* Internet Status */
+    .inet-indicator { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; }
+    .inet-dot { width: 10px; height: 10px; border-radius: 50%; transition: 0.3s; }
+    .inet-up { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .inet-down { background: var(--red); box-shadow: 0 0 8px var(--red); animation: cell-blink 0.5s infinite; }
     
     /* Cell States */
     .state-known { background: rgba(34, 197, 94, 0.2); border-color: var(--green); }
@@ -153,9 +168,15 @@
     .det-section h4 { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
     .svc-match { padding: 8px; background: rgba(59,130,246,0.1); border: 1px solid var(--accent); border-radius: 6px; font-size: 0.75rem; margin-top: 6px; }
 
-    /* List View (Original Cards) */
-    #list-view { display: none; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; overflow-y: auto; padding-right: 10px; }
-    .host-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    /* List View */
+    #list-view { display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; overflow-y: auto; flex: 1; padding: 4px; }
+    .host-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem;
+    }
+    .host-card-ip { font-family: 'JetBrains Mono'; font-size: 0.85rem; font-weight: 700; }
+    .host-card-ports { display: flex; flex-wrap: wrap; gap: 4px; }
+    .host-card-port { padding: 2px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; font-size: 0.65rem; font-family: 'JetBrains Mono'; color: var(--accent); }
 
     .stats-floating { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 15px; }
     .stat-chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: flex; gap: 8px; align-items: center; }
@@ -192,45 +213,41 @@
   <header>
     <div class="brand">
       <div class="brand-icon">🛡️</div>
-      <h1 id="brand-title">AutoDash Command</h1>
+      <h1 id="brand-title">AutoDash</h1>
     </div>
     <div class="nav-tabs">
       <a href="index.html" class="tab active" id="tab-net">Network</a>
       <div class="tab" onclick="toggleSecMode()" id="tab-sec">Security</div>
-      <a href="links.html" class="tab">Intel Hub</a>
+      <a href="links.html" class="tab">Intel</a>
     </div>
-    <div style="margin-left: auto; display: flex; gap: 15px;">
-      <div class="stat-chip" style="border-color: var(--green);"><span style="color: var(--green)">●</span> <span id="count-online">0</span> ONLINE</div>
-      <div class="stat-chip" style="border-color: var(--sec);"><span style="color: var(--sec)">●</span> <span id="count-risk">0</span> AT RISK</div>
-      <div class="stat-chip" style="border-color: var(--orange);"><span style="color: var(--orange)">●</span> <span id="count-unknown">0</span> UNKNOWN</div>
+
+    <div class="hdr-control">
+      <input type="text" id="subnet-input" value="192.168.1" class="hdr-input" title="Subnet">
+      <select id="port-preset" onchange="updatePresetInfo()" class="hdr-select">
+        <option value="common">Standard</option>
+        <option value="web">Web</option>
+        <option value="extended">Infra</option>
+        <option value="intensive">Deep</option>
+        <option value="security">🔴 SecAudit</option>
+        <option value="allip">🔵 All Ports</option>
+      </select>
+      <button class="btn btn-s" onclick="toggleView()"><span id="view-mode-label">GRID</span></button>
+      <button class="btn btn-p" onclick="startScan()" id="scan-btn">⚡ SCAN</button>
+    </div>
+
+    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+      <div class="wan-block">
+        <div class="inet-indicator"><div class="inet-dot inet-up" id="inet-dot"></div><span id="inet-label">WAN ✓</span></div>
+        <span class="wan-time" id="wan-time">—</span>
+      </div>
+      <div class="stat-chip" style="border-color: var(--green);"><span style="color: var(--green)">●</span> <span id="count-online">0</span></div>
+      <div class="stat-chip" style="border-color: var(--sec);"><span style="color: var(--sec)">●</span> <span id="count-risk">0</span></div>
+      <div class="stat-chip" style="border-color: var(--orange);"><span style="color: var(--orange)">●</span> <span id="count-unknown">0</span></div>
     </div>
   </header>
+  <div id="scan-progress"><div id="scan-progress-fill"></div></div>
 
   <main>
-    <div class="controls-row">
-      <div style="display: flex; flex-direction: column; gap: 4px;">
-        <label style="font-size: 0.65rem; color: var(--text3); font-weight: 800; text-transform: uppercase;">IP Range</label>
-        <input type="text" id="subnet-input" value="192.168.1" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px; font-family: 'JetBrains Mono';">
-      </div>
-      
-      <div style="display: flex; flex-direction: column; gap: 4px;">
-        <label style="font-size: 0.65rem; color: var(--text3); font-weight: 800; text-transform: uppercase;">Scan Preset</label>
-        <select id="port-preset" onchange="updatePresetInfo()" style="background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px;">
-          <option value="common">Standard Scan</option>
-          <option value="web">Web Discovery</option>
-          <option value="extended">Infrastructure</option>
-          <option value="intensive">Deep Scan</option>
-          <option value="security">🔴 Security Audit</option>
-        </select>
-      </div>
-      
-      <div id="preset-details" class="preset-info">Ports: 22, 80, 443, 8080...</div>
-
-      <div style="margin-left: auto; display: flex; gap: 10px;">
-        <button class="btn btn-s" onclick="toggleView()">VIEW: <span id="view-mode-label">GRID</span></button>
-        <button class="btn btn-p" onclick="startScan()" id="scan-btn">⚡ RUN SCAN</button>
-      </div>
-    </div>
 
     <div class="view-container">
       <div id="grid-view"></div>
@@ -264,7 +281,8 @@ const PORT_PRESETS = {
   web: [80, 443, 8000, 8080, 8443, 8888, 9000],
   extended: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379],
   intensive: [21,22,23,25,53,80,110,111,135,139,143,443,445,548,587,631,993,995,1025,1723,1883,2049,3000,3001,3128,3306,3389,5000,5060,5432,5900,6379,8000,8080,9000,27017],
-  security: [21,22,23,25,53,80,110,135,139,143,443,445,587,993,995,1433,1723,3306,3389,5060,5432,5900,8080,8443,27017]
+  security: [21,22,23,25,53,80,110,135,139,143,443,445,587,993,995,1433,1723,3306,3389,5060,5432,5900,8080,8443,27017],
+  allip: [...Array.from({length:1024},(_, i)=>i+1), 1080,1433,1521,1723,1883,2049,3000,3001,3128,3306,3389,5000,5060,5432,5900,5984,6379,6667,8000,8080,8443,8888,9000,9090,9200,11211,27017,28017]
 };
 const PORT_INTEL = {
   21:{n:'FTP',r:'HIGH',d:'Unencrypted file transfer'},22:{n:'SSH',r:'MED',d:'Secure shell'},23:{n:'Telnet',r:'CRITICAL',d:'Unencrypted remote login'},25:{n:'SMTP',r:'MED',d:'Email relay'},53:{n:'DNS',r:'MED',d:'Domain resolver'},80:{n:'HTTP',r:'LOW',d:'Web server'},110:{n:'POP3',r:'HIGH',d:'Unencrypted mail'},111:{n:'RPCBind',r:'HIGH',d:'RPC services'},135:{n:'MSRPC',r:'HIGH',d:'Windows RPC'},139:{n:'NetBIOS',r:'HIGH',d:'Windows shares'},143:{n:'IMAP',r:'MED',d:'Email access'},443:{n:'HTTPS',r:'LOW',d:'Encrypted web'},445:{n:'SMB',r:'CRITICAL',d:'File sharing - WannaCry vector'},548:{n:'AFP',r:'MED',d:'Apple filing'},587:{n:'SMTP-Sub',r:'LOW',d:'Mail submission'},631:{n:'CUPS',r:'MED',d:'Print server'},993:{n:'IMAPS',r:'LOW',d:'Secure IMAP'},995:{n:'POP3S',r:'LOW',d:'Secure POP3'},1433:{n:'MSSQL',r:'CRITICAL',d:'Microsoft SQL'},1723:{n:'PPTP',r:'HIGH',d:'VPN - known exploits'},1883:{n:'MQTT',r:'HIGH',d:'IoT messaging'},2049:{n:'NFS',r:'HIGH',d:'Network filesystem'},3000:{n:'Dev',r:'MED',d:'Dev server'},3001:{n:'Dev-Alt',r:'MED',d:'Dev server alt'},3128:{n:'Proxy',r:'MED',d:'HTTP proxy'},3306:{n:'MySQL',r:'HIGH',d:'Database'},3389:{n:'RDP',r:'CRITICAL',d:'Remote Desktop'},5000:{n:'UPnP',r:'HIGH',d:'Universal PnP'},5060:{n:'SIP',r:'HIGH',d:'VoIP'},5432:{n:'Postgres',r:'HIGH',d:'Database'},5900:{n:'VNC',r:'CRITICAL',d:'Remote screen'},6379:{n:'Redis',r:'HIGH',d:'In-memory DB'},8000:{n:'Web-Alt',r:'LOW',d:'Alt web'},8080:{n:'HTTP-Proxy',r:'LOW',d:'Alt web/proxy'},8443:{n:'HTTPS-Alt',r:'LOW',d:'Alt secure web'},9000:{n:'Portainer',r:'MED',d:'Container mgmt'},27017:{n:'MongoDB',r:'CRITICAL',d:'NoSQL database'}
@@ -274,15 +292,30 @@ let devices = [], knownIps = JSON.parse(localStorage.getItem('dash_known_ips')||
 let knownRegistry = [], serviceApps = [];
 let viewMode = 'GRID', scanning = false, abortCtl = null, secMode = false;
 
-// Load external registries
+// Load external registries (JSON + CSV)
 async function loadRegistries() {
   try {
     const r = await fetch('known-devices.json'); const j = await r.json();
     knownRegistry = j.devices || [];
     knownRegistry.forEach(d => { if (!knownIps.includes(d.ip)) knownIps.push(d.ip); });
-    localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
-    log(`Loaded ${knownRegistry.length} known devices from registry`);
-  } catch(e) { log('known-devices.json not found, using localStorage only'); }
+    log(`Loaded ${knownRegistry.length} known devices from JSON`);
+  } catch(e) { log('known-devices.json not found'); }
+  // Load CSV known hosts
+  try {
+    const r = await fetch('known-hosts.csv'); const txt = await r.text();
+    const lines = txt.trim().split('\n').slice(1); // skip header
+    let csvCount = 0;
+    lines.forEach(line => {
+      const [ip, label, type, icon, notes] = line.split(',').map(s => s.trim());
+      if (ip && !knownRegistry.find(d => d.ip === ip)) {
+        knownRegistry.push({ ip, label: label||ip, type: type||'device', icon: icon||'📌', notes: notes||'' });
+        csvCount++;
+      }
+      if (ip && !knownIps.includes(ip)) knownIps.push(ip);
+    });
+    if (csvCount) log(`Loaded ${csvCount} devices from known-hosts.csv`);
+  } catch(e) { log('known-hosts.csv not found'); }
+  localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
   try {
     const r = await fetch('service-apps.json'); serviceApps = await r.json();
     log(`Loaded ${serviceApps.length} service signatures`);
@@ -333,7 +366,8 @@ function renderGrid() {
 async function startScan() {
   if (scanning) { abortCtl.abort(); finishScan(); return; }
   scanning = true; abortCtl = new AbortController();
-  document.getElementById('scan-btn').textContent = '⏹ STOP SCAN';
+  document.getElementById('scan-btn').textContent = '⏹ STOP';
+  speak('Starting network scan');
   log('Starting subnet scan...');
   const ports = PORT_PRESETS[document.getElementById('port-preset').value];
   const BS = 15;
@@ -356,7 +390,10 @@ async function startScan() {
     found ? handleDeviceOnline(d) : handleDeviceOffline(d);
     if (i % 10 === 0) renderGrid();
     updateStats();
+    document.getElementById('scan-progress-fill').style.width = ((i+1)/devices.length*100)+'%';
   }
+  document.getElementById('scan-progress-fill').style.width = '100%';
+  setTimeout(() => { document.getElementById('scan-progress-fill').style.width = '0%'; }, 2000);
   finishScan();
 }
 
@@ -400,6 +437,30 @@ function toggleView() {
   document.getElementById('grid-view').style.display = viewMode==='GRID'?'grid':'none';
   document.getElementById('list-view').style.display = viewMode==='LIST'?'grid':'none';
   if (viewMode==='LIST') renderList();
+}
+
+function renderList() {
+  const c = document.getElementById('list-view');
+  const sorted = [...devices].sort((a,b) => {
+    const order = {ONLINE:0, UNKNOWN:1, OFFLINE_ANIM:2, OFFLINE:3, DEAD:4};
+    return (order[a.status]||4) - (order[b.status]||4);
+  });
+  c.innerHTML = sorted.map(d => {
+    const reg = getRegistryDevice(d.ip);
+    const isDead = d.status==='DEAD';
+    const isOn = d.status==='ONLINE';
+    const borderCol = isOn ? 'var(--green)' : d.status==='UNKNOWN' ? 'var(--orange)' : d.status==='OFFLINE_ANIM' ? 'var(--red)' : 'var(--border)';
+    const statusCol = isOn ? 'var(--green)' : d.status==='UNKNOWN' ? 'var(--orange)' : d.status==='OFFLINE_ANIM' ? 'var(--red)' : 'var(--grey)';
+    const pi = d.ports.map(p => { const r = getRisk(p); return `<span class="host-card-port">${p} ${r.n}</span>`; }).join('');
+    return `<div class="host-card" onclick="showDetails(${d.id})" style="cursor:pointer;border-color:${borderCol};${isDead?'opacity:0.3':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="host-card-ip">${d.ip}</span>
+        <span style="font-size:0.65rem;color:${statusCol}">${d.status}</span>
+      </div>
+      ${reg ? `<span style="font-size:0.7rem;color:var(--text2)">${reg.icon} ${reg.label}</span>` : ''}
+      <div class="host-card-ports">${pi || `<span style="color:var(--grey);font-size:0.65rem">${isDead?'—':'No ports'}</span>`}</div>
+    </div>`;
+  }).join('');
 }
 
 function toggleSecMode() {
@@ -478,18 +539,42 @@ function updateStats() {
 }
 
 function updatePresetInfo() {
-  const p = document.getElementById('port-preset').value;
-  document.getElementById('preset-details').textContent = 'Ports: ' + PORT_PRESETS[p].join(', ');
+  const el = document.getElementById('preset-details');
+  if (el) { const p = document.getElementById('port-preset').value; el.textContent = 'Ports: ' + PORT_PRESETS[p].join(', '); }
 }
 
 function finishScan() {
-  scanning = false; document.getElementById('scan-btn').textContent = '⚡ RUN SCAN';
+  scanning = false; document.getElementById('scan-btn').textContent = '⚡ SCAN';
+  speak('Scan complete');
   log('Scan complete.'); renderGrid(); updateStats();
 }
 
 function resetAllDevices() { if(confirm('Clear all device history?')){localStorage.clear();location.reload();} }
 
-(async () => { await loadRegistries(); initDevices(); updatePresetInfo(); })();
+// Internet connectivity check every 60s
+let inetUp = true;
+async function checkInternet() {
+  const now = new Date().toLocaleTimeString();
+  try {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 3000);
+    await fetch('http://192.168.1.254', { mode: 'no-cors', signal: ac.signal });
+    clearTimeout(t);
+    if (!inetUp) { inetUp = true; log('🟢 Internet gateway ONLINE'); }
+    document.getElementById('inet-dot').className = 'inet-dot inet-up';
+    document.getElementById('inet-label').textContent = 'WAN ✓';
+    document.getElementById('inet-label').style.color = 'var(--green)';
+  } catch(e) {
+    if (inetUp) { inetUp = false; log('🔴 Internet gateway OFFLINE', 'red'); speak('Warning: Internet gateway offline', true); triggerEdgeAlert('red'); }
+    document.getElementById('inet-dot').className = 'inet-dot inet-down';
+    document.getElementById('inet-label').textContent = 'WAN ✗';
+    document.getElementById('inet-label').style.color = 'var(--red)';
+  }
+  document.getElementById('wan-time').textContent = now;
+}
+setInterval(checkInternet, 60000);
+
+(async () => { await loadRegistries(); initDevices(); updatePresetInfo(); checkInternet(); })();
 </script>
 </body>
 </html>
