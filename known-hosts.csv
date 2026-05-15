@@ -1,5 +1,5 @@
 ip,label,type,icon,notes
-192.168.1.1,Gateway Router,router,🌐,Primary network gateway
-192.168.1.2,DNS Server,server,📡,Local DNS resolver
-192.168.1.100,NVR / CCTV,camera,📹,Network Video Recorder
-192.168.1.254,ISP Modem,router,🔌,Internet uplink
+192.168.1.249,AccessPoint,wifi,router,
+192.168.1.253,PiHole,DNS,server,Local DNS resolver
+192.168.1.250,NVR,camera,📹,Network Video Recorder
+192.168.1.254,ISP Modem,gateway,🔌,Internet uplink
