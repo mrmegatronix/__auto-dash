@@ -202,7 +202,30 @@
     }
     #top-banner.active + #banner-toggle { top: 180px; } /* Follow the banner */
 
-    #scan-log { position: fixed; bottom: 30px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; }
+    #scan-log { position: fixed; bottom: 30px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; z-index: 1500; }
+
+    /* Bottom Camera Bar */
+    #bottom-cam-bar {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      height: 140px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .mini-cam {
+      flex: 0 0 220px;
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .mini-cam iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+    .mini-cam-label { position: absolute; top: 5px; left: 8px; font-size: 0.55rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
   </style>
 </head>
 <body id="main-body">
@@ -284,6 +307,14 @@
     </div>
 
     <div id="scan-log"></div>
+
+    <div id="bottom-cam-bar">
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 01</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 02</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 03</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 04</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">NVR FEED</div></div>
+    </div>
 
     <div class="stats-floating">
       <div class="stat-chip">DNS: <span id="info-dns" style="color: var(--accent);">8.8.8.8</span></div>
