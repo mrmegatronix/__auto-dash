@@ -13,7 +13,8 @@ function Sync-Files {
     foreach ($Remote in $Remotes) {
         Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Syncing $File to $Remote..." -ForegroundColor Cyan
         try {
-            scp -o ConnectTimeout=5 "$SourceDir\$File" "$Remote"
+            # BatchMode=yes prevents hanging on password prompts
+            scp -q -o ConnectTimeout=5 -o BatchMode=yes "$SourceDir\$File" "$Remote"
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "  ✔ Success" -ForegroundColor Green
             } else {
@@ -28,7 +29,7 @@ function Sync-Files {
 # Watcher setup
 $Watcher = New-Object System.IO.FileSystemWatcher
 $Watcher.Path = $SourceDir
-$Watcher.Filter = "*.html"
+$Watcher.Filter = "*.*" # Watch all files (HTML, CSV, JSON)
 $Watcher.IncludeSubdirectories = $false
 $Watcher.EnableRaisingEvents = $true
 
@@ -36,11 +37,13 @@ $Action = {
     $Path = $Event.SourceEventArgs.FullPath
     $Name = $Event.SourceEventArgs.Name
     $ChangeType = $Event.SourceEventArgs.ChangeType
-    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $ChangeType detected: $Name" -ForegroundColor Yellow
     
-    # Simple debounce to prevent double-sync on rapid saves
-    Start-Sleep -Milliseconds 500
-    Sync-Files -File $Name
+    # Only sync relevant web files
+    if ($Name -match "\.(html|csv|json|css|js)$") {
+        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $ChangeType detected: $Name" -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 500
+        Sync-Files -File $Name
+    }
 }
 
 # Register events
@@ -50,7 +53,13 @@ Register-ObjectEvent $Watcher "Created" -Action $Action
 Write-Host "--- AutoDash Sync Active ---" -ForegroundColor Green
 Write-Host "Watching: $SourceDir"
 Write-Host "Targets: $($Remotes -join ', ')"
-Write-Host "Press Ctrl+C to stop."
+Write-Host "Syncing all current files now..." -ForegroundColor Gray
+
+# Initial full sync
+$Files = Get-ChildItem -Path $SourceDir -Include *.html, *.csv, *.json
+foreach ($f in $Files) { Sync-Files -File $f.Name }
+
+Write-Host "Ready. Press Ctrl+C to stop."
 
 # Loop to keep script alive
 try {
