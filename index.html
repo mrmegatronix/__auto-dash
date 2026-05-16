@@ -104,7 +104,11 @@
       min-height: 52px;
     }
     .device-cell:hover { transform: scale(1.2); z-index: 50; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: var(--surface-bright); }
-    .cell-ip { font-size: 0.6rem; font-family: 'JetBrains Mono'; font-weight: 700; opacity: 0.8; line-height: 1; color: #fff; }
+    .cell-ip { 
+        font-size: 0.55rem; font-family: 'JetBrains Mono'; font-weight: 700; 
+        opacity: 0.8; line-height: 1.1; color: #fff; 
+        max-width: 90%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .cell-dot { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-bottom: 2px; transition: 0.3s; }
 
     /* Scan Progress Bar */
@@ -187,12 +191,42 @@
     .host-card-ports { display: flex; flex-wrap: wrap; gap: 4px; }
     .host-card-port { padding: 2px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; font-size: 0.65rem; font-family: 'JetBrains Mono'; color: var(--accent); }
 
-    .stats-floating { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 15px; }
-    .stat-chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+    .stats-floating { position: fixed; bottom: 180px; right: 40px; display: flex; gap: 15px; z-index: 1500; }
+    .stat-chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: flex; gap: 8px; align-items: center; backdrop-filter: blur(10px); }
 
 
 
-    #scan-log { position: fixed; bottom: 30px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; z-index: 1500; }
+
+    #scan-log { position: fixed; bottom: 180px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; z-index: 1500; }
+
+    /* Bottom Camera Bar */
+    #bottom-cam-bar {
+      display: flex;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      height: 160px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+    .mini-cam {
+      flex: 0 0 250px;
+      background: #000;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .mini-cam:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .mini-cam iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+    .mini-cam-label { position: absolute; top: 8px; left: 10px; font-size: 0.6rem; color: #fff; background: rgba(0,0,0,0.8); padding: 3px 8px; border-radius: 4px; font-weight: 800; border: 1px solid var(--border); }
+
 
 
   </style>
@@ -258,6 +292,14 @@
     </div>
 
     <div id="scan-log"></div>
+
+    <div id="bottom-cam-bar">
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 01</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 02</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 03</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 04</div></div>
+      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">NVR FEED</div></div>
+    </div>
 
 
 
@@ -349,11 +391,13 @@ function renderGrid() {
     if (d.status === 'OFFLINE_ANIM') sc = 'state-offline-anim';
     if (d.status === 'OFFLINE') sc = 'state-offline';
     if (d.lastSeen && Date.now() - new Date(d.lastSeen).getTime() > 86400000) sc = 'state-dead';
-    const reg = getRegistryDevice(d.ip);
-    const label = reg ? reg.icon : '';
-    return `<div class="device-cell ${sc}" onclick="showDetails(${d.id})" id="cell-${d.id}" title="${d.ip}${reg ? ' - '+reg.label : ''}">
-      <div class="cell-dot"></div><div class="cell-ip">${label}.${d.id}</div></div>`;
-  }).join('');
+      const reg = getRegistryDevice(d.ip);
+      const displayName = reg ? reg.label : (d.hostname || d.id);
+      const icon = reg ? reg.icon : '';
+
+      return `<div class="device-cell ${sc}" onclick="showDetails(${d.id})" id="cell-${d.id}" title="${d.ip}${reg ? ' - '+reg.label : ''}">
+        <div class="cell-dot"></div><div class="cell-ip" style="font-size: ${displayName.toString().length > 10 ? '0.45rem' : '0.55rem'}">${icon} ${displayName}</div></div>`;
+    }).join('');
 }
 
 async function startScan() {
