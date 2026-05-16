@@ -9,17 +9,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #04060a;
-      --bg2: #080c14;
-      --surface: #0e1422;
-      --border: rgba(99,179,255,0.12);
+      --bg: #020408;
+      --bg2: #05080f;
+      --surface: #0a0f1d;
+      --surface-bright: #161d31;
+      --border: rgba(99,179,255,0.1);
       --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.4);
       --sec: #f43f5e;
-      --green: #22c55e;
+      --green: #10b981;
       --orange: #f59e0b;
       --red: #ef4444;
       --grey: #475569;
-      --text: #f1f5f9;
+      --text: #f8fafc;
       --text2: #94a3b8;
       --radius: 12px;
     }
@@ -42,59 +44,54 @@
     .alert-red { border: 12px solid var(--red) !important; animation: edge-blink 0.5s infinite; }
     @keyframes edge-blink { 0%, 100% { border-color: transparent; } 50% { border-color: inherit; } }
 
-    /* Top Banner */
-    /* Top Banner (Camera Slider) */
-    #top-banner {
-        position: absolute; top: -180px; left: 0; width: 100%; height: 180px;
-        background: var(--surface); border-bottom: 2px solid var(--accent);
-        z-index: 1000; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex; padding: 15px 30px; gap: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+
+    header { 
+        display: flex; align-items: center; padding: 12px 24px; gap: 16px; 
+        background: rgba(8, 12, 20, 0.8); backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border); position: relative; z-index: 1000;
     }
-    #top-banner.active { transform: translateY(180px); }
-    .banner-controls { display: flex; flex-direction: column; gap: 10px; width: 220px; }
-    .cam-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-    .cam-box { background: #000; border-radius: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; cursor: pointer; }
-    .cam-box iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
-    .cam-label { position: absolute; bottom: 5px; left: 8px; font-size: 0.65rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon { font-size: 1.4rem; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+    .brand h1 { font-size: 1.1rem; font-weight: 900; letter-spacing: -0.03em; color: #fff; text-transform: uppercase; }
 
-    header { display: flex; align-items: center; padding: 8px 20px; gap: 12px; background: var(--bg2); border-bottom: none; flex-wrap: nowrap; }
-    .brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .brand-icon { font-size: 1.2rem; }
-    .brand h1 { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
+    .nav-tabs { display: flex; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
+    .tab { padding: 6px 16px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--text2); text-decoration: none; }
+    .tab.active { background: var(--accent); color: white; box-shadow: 0 0 15px var(--accent-glow); }
+    .tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
 
-    .nav-tabs { display: flex; background: var(--bg); padding: 3px; border-radius: 6px; flex-shrink: 0; }
-    .tab { padding: 4px 12px; border-radius: 5px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; color: var(--text2); text-decoration: none; }
-    .tab.active { background: var(--accent); color: white; }
-
-    .hdr-control { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .hdr-input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 0.75rem; width: 100px; }
-    .hdr-select { background: var(--bg); border: 1px solid var(--border); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; }
-    .btn { padding: 6px 14px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; font-size: 0.75rem; }
-    .btn-p { background: var(--accent); color: white; }
+    .hdr-control { display: flex; align-items: center; gap: 8px; }
+    .hdr-input { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 0.75rem; width: 110px; transition: 0.2s; }
+    .hdr-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px var(--accent-glow); }
+    .hdr-select { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-p { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
     .btn-s { background: var(--surface); color: var(--text2); border: 1px solid var(--border); }
-    .btn:hover { transform: translateY(-1px); }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    .btn-p:hover { background: #4e92ff; }
 
     /* WAN indicator with timestamp */
-    .wan-block { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-    .wan-time { font-size: 0.5rem; color: var(--text2); font-family: 'JetBrains Mono'; }
+    .wan-block { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 15px; border-left: 1px solid var(--border); }
+    .wan-time { font-size: 0.6rem; color: var(--text2); font-family: 'JetBrains Mono'; font-weight: 600; }
 
-    main { flex: 1; padding: 6px 12px; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+    main { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
 
     /* View Switcher */
     .view-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
     
-    /* GRID VIEW (254 Icons) — fits all 254 on one 1080p page */
+    /* GRID VIEW */
     #grid-view {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
-      gap: 3px;
-      padding: 4px;
+      grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+      gap: 8px;
+      padding: 15px;
       flex: 1;
       align-content: start;
+      overflow-y: auto;
     }
     .device-cell {
-      border-radius: 3px;
-      background: #000;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.4);
       border: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -102,13 +99,13 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: 0.2s;
-      padding: 2px 0;
-      min-height: 32px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 8px 0;
+      min-height: 52px;
     }
-    .device-cell:hover { transform: scale(1.15); z-index: 10; border-color: var(--accent); box-shadow: 0 0 12px rgba(59,130,246,0.4); }
-    .cell-ip { font-size: 0.55rem; font-family: 'JetBrains Mono'; opacity: 0.7; line-height: 1; }
-    .cell-dot { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-bottom: 1px; }
+    .device-cell:hover { transform: scale(1.2); z-index: 50; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: var(--surface-bright); }
+    .cell-ip { font-size: 0.6rem; font-family: 'JetBrains Mono'; font-weight: 700; opacity: 0.8; line-height: 1; color: #fff; }
+    .cell-dot { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-bottom: 2px; transition: 0.3s; }
 
     /* Scan Progress Bar */
     #scan-progress { height: 3px; background: var(--surface); width: 100%; border-radius: 2px; overflow: hidden; }
@@ -174,11 +171,11 @@
     /* List View (Reactive) */
     #list-view { 
         display: none; 
-        grid-template-columns: repeat(auto-fill, minmax(clamp(200px, 20vw, 400px), 1fr)); 
-        gap: 8px; 
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); 
+        gap: 12px; 
         overflow-y: auto; 
         flex: 1; 
-        padding: 4px;
+        padding: 15px;
         scrollbar-width: thin;
         scrollbar-color: var(--accent) transparent;
     }
@@ -193,62 +190,16 @@
     .stats-floating { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 15px; }
     .stat-chip { background: var(--surface); border: 1px solid var(--border); padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: flex; gap: 8px; align-items: center; }
 
-    #banner-toggle {
-      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-      background: var(--accent); color: white; padding: 4px 20px;
-      border-radius: 0 0 10px 10px; cursor: pointer; font-weight: 800; font-size: 0.7rem;
-      z-index: 1100;
-      transition: top 0.5s ease;
-    }
-    #top-banner.active + #banner-toggle { top: 180px; } /* Follow the banner */
+
 
     #scan-log { position: fixed; bottom: 30px; left: 40px; width: 400px; max-height: 120px; background: rgba(0,0,0,0.7); font-size: 0.7rem; font-family: 'JetBrains Mono'; color: var(--text2); overflow-y: auto; padding: 10px; border-radius: 8px; z-index: 1500; }
 
-    /* Bottom Camera Bar */
-    #bottom-cam-bar {
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      height: 140px;
-      overflow-x: auto;
-      flex-shrink: 0;
-    }
-    .mini-cam {
-      flex: 0 0 220px;
-      background: #000;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .mini-cam iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
-    .mini-cam-label { position: absolute; top: 5px; left: 8px; font-size: 0.55rem; color: #fff; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
   </style>
 </head>
 <body id="main-body">
 
-  <div id="top-banner" class="active">
-    <div class="banner-controls">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size: 0.9rem; color: var(--accent);">SECURITY MONITOR</h3>
-        <button onclick="toggleBanner()" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:2px 8px; border-radius:4px; font-size:0.6rem; cursor:pointer;">RETRACT ▲</button>
-      </div>
-      <div class="btn btn-s" style="font-size: 0.7rem;" onclick="location.href='4cam-view.html'">🖥️ FULL 4-CAM VIEW</div>
-      <div class="btn btn-s" style="font-size: 0.7rem;" onclick="resetAllDevices()">🔄 RESET CACHE</div>
-      <div style="font-size: 0.65rem; color: var(--text3); margin-top: auto;">AutoDash v2.0 - Network Command</div>
-    </div>
-    <div class="cam-grid">
-      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 01 - NORTH</div></div>
-      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 02 - SOUTH</div></div>
-      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 03 - ENTRANCE</div></div>
-      <div class="cam-box"><iframe src="about:blank"></iframe><div class="cam-label">CAM 04 - OFFICE</div></div>
-    </div>
-  </div>
 
-  <div id="banner-toggle" onclick="toggleBanner()">CAM & CONTROLS ▼</div>
 
   <header>
     <div class="brand">
@@ -308,13 +259,7 @@
 
     <div id="scan-log"></div>
 
-    <div id="bottom-cam-bar">
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 01</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 02</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 03</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 04</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">NVR FEED</div></div>
-    </div>
+
 
     <div class="stats-floating">
       <div class="stat-chip">DNS: <span id="info-dns" style="color: var(--accent);">8.8.8.8</span></div>
@@ -478,12 +423,7 @@ function speak(text, female=false) {
   speechSynthesis.speak(m);
 }
 
-function toggleBanner() { 
-    const banner = document.getElementById('top-banner');
-    const toggle = document.getElementById('banner-toggle');
-    banner.classList.toggle('active');
-    toggle.textContent = banner.classList.contains('active') ? 'RETRACT ▲' : 'CAM & CONTROLS ▼';
-}
+
 function toggleView() {
   viewMode = viewMode==='GRID'?'LIST':'GRID';
   document.getElementById('view-mode-label').textContent = viewMode;
