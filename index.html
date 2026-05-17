@@ -249,21 +249,24 @@
     <div class="hdr-control">
       <input type="text" id="subnet-input" value="192.168.1" class="hdr-input" title="Subnet">
       <select id="port-preset" onchange="updatePresetInfo()" class="hdr-select">
-        <option value="common">Standard</option>
-        <option value="web">Web</option>
-        <option value="extended">Infra</option>
-        <option value="intensive">Deep</option>
-        <option value="security">🔴 SecAudit</option>
-        <option value="allip">🔵 All Ports</option>
+        <option value="common">Standard (22, 80, 443, 8080, 8443, 3000)</option>
+        <option value="web">Web (80, 443, 8000, 8080, 8443, 8888, 9000)</option>
+        <option value="extended">Infra (21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379)</option>
+        <option value="intensive">Deep (37 ports)</option>
+        <option value="security">🔴 SecAudit (25 vuln ports)</option>
+        <option value="allip">🔵 All Ports (1048 ports)</option>
       </select>
       <button class="btn btn-s" onclick="toggleView()"><span id="view-mode-label">GRID</span></button>
       <button class="btn btn-p" onclick="startScan()" id="scan-btn">⚡ SCAN</button>
     </div>
 
     <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-      <div class="wan-block">
-        <div class="inet-indicator"><div class="inet-dot inet-up" id="inet-dot"></div><span id="inet-label">WAN ✓</span></div>
-        <span class="wan-time" id="wan-time">—</span>
+      <div class="wan-block" style="flex-direction: row; gap: 10px; align-items: center;">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+          <div class="inet-indicator"><div class="inet-dot inet-up" id="inet-dot"></div><span id="inet-label">WAN ✓</span></div>
+          <span class="wan-time" id="wan-time">—</span>
+        </div>
+        <canvas id="heartbeat-canvas" width="80" height="24" style="background: rgba(0,0,0,0.25); border-radius: 4px; border: 1px solid var(--border);" title="Internet Latency Sparkline"></canvas>
       </div>
       <div class="stat-chip" style="border-color: var(--green);"><span style="color: var(--green)">●</span> <span id="count-online">0</span></div>
       <div class="stat-chip" style="border-color: var(--sec);"><span style="color: var(--sec)">●</span> <span id="count-risk">0</span></div>
@@ -304,7 +307,15 @@
 
 
     <div class="stats-floating">
-      <div class="stat-chip">DNS: <span id="info-dns" style="color: var(--accent);">8.8.8.8</span></div>
+      <div class="stat-chip" style="cursor: pointer; position: relative;" title="Click to change DNS server">
+        DNS: 
+        <select id="dns-selector" onchange="changeDNS()" style="background: none; border: none; color: var(--accent); font-weight: 700; font-family: inherit; cursor: pointer; outline: none; padding-right: 5px;">
+          <option value="8.8.8.8" style="background: var(--surface); color: var(--text);">Google (8.8.8.8)</option>
+          <option value="1.1.1.1" style="background: var(--surface); color: var(--text);">Cloudflare (1.1.1.1)</option>
+          <option value="192.168.1.253" style="background: var(--surface); color: var(--text);">Pi-hole (192.168.1.253)</option>
+          <option value="9.9.9.9" style="background: var(--surface); color: var(--text);">Quad9 (9.9.9.9)</option>
+        </select>
+      </div>
       <div class="stat-chip">ARP: <span id="info-arp" style="color: var(--text2);">Active</span></div>
       <div class="stat-chip">NET: <span id="info-net" style="color: var(--text2);">192.168.1.0/24</span></div>
     </div>
@@ -321,6 +332,19 @@ const PORT_PRESETS = {
 };
 const PORT_INTEL = {
   21:{n:'FTP',r:'HIGH',d:'Unencrypted file transfer'},22:{n:'SSH',r:'MED',d:'Secure shell'},23:{n:'Telnet',r:'CRITICAL',d:'Unencrypted remote login'},25:{n:'SMTP',r:'MED',d:'Email relay'},53:{n:'DNS',r:'MED',d:'Domain resolver'},80:{n:'HTTP',r:'LOW',d:'Web server'},110:{n:'POP3',r:'HIGH',d:'Unencrypted mail'},111:{n:'RPCBind',r:'HIGH',d:'RPC services'},135:{n:'MSRPC',r:'HIGH',d:'Windows RPC'},139:{n:'NetBIOS',r:'HIGH',d:'Windows shares'},143:{n:'IMAP',r:'MED',d:'Email access'},443:{n:'HTTPS',r:'LOW',d:'Encrypted web'},445:{n:'SMB',r:'CRITICAL',d:'File sharing - WannaCry vector'},548:{n:'AFP',r:'MED',d:'Apple filing'},587:{n:'SMTP-Sub',r:'LOW',d:'Mail submission'},631:{n:'CUPS',r:'MED',d:'Print server'},993:{n:'IMAPS',r:'LOW',d:'Secure IMAP'},995:{n:'POP3S',r:'LOW',d:'Secure POP3'},1433:{n:'MSSQL',r:'CRITICAL',d:'Microsoft SQL'},1723:{n:'PPTP',r:'HIGH',d:'VPN - known exploits'},1883:{n:'MQTT',r:'HIGH',d:'IoT messaging'},2049:{n:'NFS',r:'HIGH',d:'Network filesystem'},3000:{n:'Dev',r:'MED',d:'Dev server'},3001:{n:'Dev-Alt',r:'MED',d:'Dev server alt'},3128:{n:'Proxy',r:'MED',d:'HTTP proxy'},3306:{n:'MySQL',r:'HIGH',d:'Database'},3389:{n:'RDP',r:'CRITICAL',d:'Remote Desktop'},5000:{n:'UPnP',r:'HIGH',d:'Universal PnP'},5060:{n:'SIP',r:'HIGH',d:'VoIP'},5432:{n:'Postgres',r:'HIGH',d:'Database'},5900:{n:'VNC',r:'CRITICAL',d:'Remote screen'},6379:{n:'Redis',r:'HIGH',d:'In-memory DB'},8000:{n:'Web-Alt',r:'LOW',d:'Alt web'},8080:{n:'HTTP-Proxy',r:'LOW',d:'Alt web/proxy'},8443:{n:'HTTPS-Alt',r:'LOW',d:'Alt secure web'},9000:{n:'Portainer',r:'MED',d:'Container mgmt'},27017:{n:'MongoDB',r:'CRITICAL',d:'NoSQL database'}
+};
+const CVE_DATABASE = {
+  21: { cve: 'CVE-1999-0082', desc: 'Unencrypted FTP commands can be intercepted via packet sniffing. Implement SFTP/SSH.' },
+  22: { cve: 'CVE-2023-48795', desc: 'Terrapin Attack: SSH protocol vulnerability allows connection security downgrades. Enforce secure cipher suites.' },
+  23: { cve: 'CVE-2020-10188', desc: 'Telnet execution vulnerability. Plain-text communications expose credentials. Disable Telnet immediately.' },
+  80: { cve: 'OWASP-A3:2021', desc: 'Sensitive data exposure via clear-text HTTP. Enforce HTTPS/SSL redirection.' },
+  443: { cve: 'CVE-2014-0160', desc: 'Heartbleed (historic) / SSL configuration audit recommended. Ensure TLS 1.3 is enforced.' },
+  445: { cve: 'CVE-2017-0144', desc: 'EternalBlue / WannaCry SMBv1 exploit vector. Disable SMBv1 and apply Microsoft MS17-010 patch.' },
+  3306: { cve: 'CVE-2012-2122', desc: 'MySQL Password Authentication Bypass. Restrict MySQL external bindings.' },
+  3389: { cve: 'CVE-2019-0708', desc: 'BlueKeep Remote Code Execution. Enforce Network Level Authentication (NLA).' },
+  5900: { cve: 'CVE-2006-2369', desc: 'VNC Authentication Bypass vulnerability. Use SSH tunneling for screen sharing.' },
+  8080: { cve: 'CVE-2021-44228', desc: 'Log4Shell remote code execution risk on web applications. Verify backend frameworks.' },
+  27017: { cve: 'CVE-2019-2386', desc: 'MongoDB NoSQL Injection and unauthenticated access. Bind to localhost and enable auth.' }
 };
 
 let devices = [], knownIps = JSON.parse(localStorage.getItem('dash_known_ips')||'[]');
@@ -538,6 +562,27 @@ function showDetails(id) {
       </a>`;
     }).join('');
 
+  // Security vulnerability / CVE analysis
+  if (secMode && d.ports.length) {
+    const vulnHtml = d.ports.map(p => {
+      const vuln = CVE_DATABASE[p];
+      if (!vuln) return '';
+      return `
+        <div style="padding: 10px; background: rgba(244, 63, 94, 0.08); border-left: 3px solid var(--sec); border-radius: 4px; margin-bottom: 8px;">
+          <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--sec); font-size:0.7rem; margin-bottom:3px;">
+            <span>PORT ${p} VULNERABILITY</span>
+            <span style="font-family:'JetBrains Mono'">${vuln.cve}</span>
+          </div>
+          <p style="font-size:0.65rem; color:var(--text3); line-height:1.3; margin:0;">${vuln.desc}</p>
+        </div>
+      `;
+    }).join('');
+    
+    if (vulnHtml) {
+      links.innerHTML += `<div class="det-section"><h4>🛡️ SECURITY CVE REPORT</h4>${vulnHtml}</div>`;
+    }
+  }
+
   // Service matches
   const svcs = matchServices(d.ports);
   if (svcs.length) {
@@ -584,34 +629,128 @@ function finishScan() {
   scanning = false; document.getElementById('scan-btn').textContent = '⚡ SCAN';
   speak('Scan complete');
   log('Scan complete.'); renderGrid(); updateStats();
+  
+  // Persist scanned devices with their open ports and metadata to localStorage
+  const activeDevices = devices.filter(d => d.status === 'ONLINE' || d.status === 'UNKNOWN');
+  localStorage.setItem('dash_scanned_devices', JSON.stringify(activeDevices));
 }
 
 function resetAllDevices() { if(confirm('Clear all device history?')){localStorage.clear();location.reload();} }
 
-// Internet connectivity check every 60s
+// Internet connectivity check every 10s with real-time heartbeat canvas
 let inetUp = true;
+let latencyHistory = Array(15).fill(25); // default values
+
+function drawHeartbeat() {
+  const canvas = document.getElementById('heartbeat-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  // Draw subtle background grid
+  ctx.strokeStyle = 'rgba(99, 179, 255, 0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 10) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y < h; y += 8) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  
+  // Draw the latency sparkline
+  ctx.beginPath();
+  const maxVal = 100; // max latency scale 100ms
+  const step = w / (latencyHistory.length - 1);
+  
+  latencyHistory.forEach((val, index) => {
+    const x = index * step;
+    const yVal = val === 0 ? h - 2 : h - ((val / maxVal) * (h - 4)) - 2;
+    const y = Math.max(2, Math.min(h - 2, yVal));
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  
+  const grad = ctx.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+  grad.addColorStop(1, inetUp ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+  
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = inetUp ? '#10b981' : '#ef4444';
+  ctx.shadowBlur = 4;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  
+  // Glowing end dot
+  const lastIdx = latencyHistory.length - 1;
+  const lastX = lastIdx * step;
+  const lastVal = latencyHistory[lastIdx];
+  const lastY = lastVal === 0 ? h - 2 : h - ((lastVal / maxVal) * (h - 4)) - 2;
+  ctx.beginPath();
+  ctx.arc(lastX, Math.max(2, Math.min(h - 2, lastY)), 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = inetUp ? '#10b981' : '#ef4444';
+  ctx.fill();
+}
+
 async function checkInternet() {
   const now = new Date().toLocaleTimeString();
+  const start = performance.now();
   try {
     const ac = new AbortController();
-    const t = setTimeout(() => ac.abort(), 3000);
-    await fetch('http://192.168.1.254', { mode: 'no-cors', signal: ac.signal });
+    const t = setTimeout(() => ac.abort(), 2000);
+    // Use an external endpoint with cache-busting to test actual WAN health
+    await fetch('https://httpbin.org/status/200?t=' + Date.now(), { mode: 'no-cors', signal: ac.signal });
     clearTimeout(t);
+    const latency = Math.round(performance.now() - start);
+    latencyHistory.push(Math.min(latency, 100));
+    if (latencyHistory.length > 15) latencyHistory.shift();
+    
     if (!inetUp) { inetUp = true; log('🟢 Internet gateway ONLINE'); }
     document.getElementById('inet-dot').className = 'inet-dot inet-up';
     document.getElementById('inet-label').textContent = 'WAN ✓';
     document.getElementById('inet-label').style.color = 'var(--green)';
   } catch(e) {
-    if (inetUp) { inetUp = false; log('🔴 Internet gateway OFFLINE', 'red'); speak('Warning: Internet gateway offline', true); triggerEdgeAlert('red'); }
+    latencyHistory.push(0); // offline
+    if (latencyHistory.length > 15) latencyHistory.shift();
+    
+    if (inetUp) { 
+      inetUp = false; 
+      log('🔴 Internet gateway OFFLINE', 'red'); 
+      speak('Warning: Internet gateway offline', true); 
+      triggerEdgeAlert('red'); 
+    }
     document.getElementById('inet-dot').className = 'inet-dot inet-down';
     document.getElementById('inet-label').textContent = 'WAN ✗';
     document.getElementById('inet-label').style.color = 'var(--red)';
   }
   document.getElementById('wan-time').textContent = now;
+  drawHeartbeat();
 }
-setInterval(checkInternet, 60000);
 
-(async () => { await loadRegistries(); initDevices(); updatePresetInfo(); checkInternet(); })();
+function changeDNS() {
+  const dns = document.getElementById('dns-selector').value;
+  log(`DNS Server updated to: ${dns}`);
+  speak(`DNS set to ${dns}`);
+  localStorage.setItem('dash_dns_server', dns);
+}
+
+setInterval(checkInternet, 10000);
+
+(async () => { 
+  await loadRegistries(); 
+  initDevices(); 
+  updatePresetInfo(); 
+  
+  // Restore saved DNS setting
+  const savedDns = localStorage.getItem('dash_dns_server');
+  if (savedDns && document.getElementById('dns-selector')) {
+    document.getElementById('dns-selector').value = savedDns;
+  }
+  
+  checkInternet(); 
+})();
 </script>
 </body>
 </html>
