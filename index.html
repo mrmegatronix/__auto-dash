@@ -82,8 +82,8 @@
     /* GRID VIEW */
     #grid-view {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(48px, 6vw, 120px), 1fr));
+      gap: clamp(4px, 1vw, 12px);
       padding: 15px;
       flex: 1;
       align-content: start;
@@ -101,11 +101,12 @@
       position: relative;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 8px 0;
-      min-height: 52px;
+      min-height: clamp(48px, 6vw, 120px);
+      aspect-ratio: 1;
     }
     .device-cell:hover { transform: scale(1.2); z-index: 50; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: var(--surface-bright); }
     .cell-ip { 
-        font-size: 0.55rem; font-family: 'JetBrains Mono'; font-weight: 700; 
+        font-size: clamp(0.45rem, 0.8vw, 0.85rem); font-family: 'JetBrains Mono'; font-weight: 700; 
         opacity: 0.8; line-height: 1.1; color: #fff; 
         max-width: 90%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -249,6 +250,7 @@
     <div class="hdr-control">
       <input type="text" id="subnet-input" value="192.168.1" class="hdr-input" title="Subnet">
       <select id="port-preset" onchange="updatePresetInfo()" class="hdr-select">
+        <option value="ping">🟢 Ping Mode (Fast Host Discovery)</option>
         <option value="common">Standard (22, 80, 443, 8080, 8443, 3000)</option>
         <option value="web">Web (80, 443, 8000, 8080, 8443, 8888, 9000)</option>
         <option value="extended">Infra (21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379)</option>
@@ -323,6 +325,7 @@
 
 <script>
 const PORT_PRESETS = {
+  ping: [80, 443, 22, 445], // Fast discovery ping surrogate
   common: [22, 80, 443, 8080, 8443, 3000],
   web: [80, 443, 8000, 8080, 8443, 8888, 9000],
   extended: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379],
@@ -420,7 +423,7 @@ function renderGrid() {
       const icon = reg ? reg.icon : '';
 
       return `<div class="device-cell ${sc}" onclick="showDetails(${d.id})" id="cell-${d.id}" title="${d.ip}${reg ? ' - '+reg.label : ''}">
-        <div class="cell-dot"></div><div class="cell-ip" style="font-size: ${displayName.toString().length > 10 ? '0.45rem' : '0.55rem'}">${icon} ${displayName}</div></div>`;
+        <div class="cell-dot"></div><div class="cell-ip" style="${displayName.toString().length > 10 ? 'font-size: clamp(0.35rem, 0.6vw, 0.65rem);' : ''}">${icon} ${displayName}</div></div>`;
     }).join('');
 }
 
