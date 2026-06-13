@@ -2,11 +2,18 @@
 # Monitors for changes in __auto-dash and syncs to remote devices via SCP/PSCP
 
 $SourceDir = "d:\__GITHUB\__auto-dash"
+$NETBOOK_PASSWORD = ""
+if (Test-Path "$SourceDir\..\ctos-beta\.env.local") {
+    Get-Content "$SourceDir\..\ctos-beta\.env.local" | ForEach-Object {
+        if ($_ -match "^NETBOOK_PASSWORD=(.*)") { $NETBOOK_PASSWORD = $matches[1].Trim() }
+    }
+}
+
 $Remotes = @(
     [PSCustomObject]@{
         Target   = "owner@192.168.1.230:/var/www/html/"
         Type     = "pscp"
-        Password = "123qaz"
+        Password = $NETBOOK_PASSWORD
         HostKey  = "SHA256:29K297dlhwRARDvtdEvvvf06sgOYgLiIud+AWhoowAY"
     },
     [PSCustomObject]@{
