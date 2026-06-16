@@ -44,6 +44,17 @@
     .alert-red { border: 12px solid var(--red) !important; animation: edge-blink 0.5s infinite; }
     @keyframes edge-blink { 0%, 100% { border-color: transparent; } 50% { border-color: inherit; } }
 
+    #alert-banner {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-200%);
+      padding: 12px 24px; border-radius: 8px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+      z-index: 2500; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px;
+    }
+    #alert-banner.show { transform: translateX(-50%) translateY(0); }
+    .banner-orange { background: var(--orange); color: #000; border: 2px solid #fff; }
+    .banner-red { background: var(--red); color: #fff; border: 2px solid #fff; }
+    .banner-green { background: var(--green); color: #000; border: 2px solid #fff; }
+
 
     header { 
         display: flex; align-items: center; padding: 12px 24px; gap: 16px; 
@@ -215,7 +226,8 @@
       scrollbar-color: var(--accent) transparent;
     }
     .mini-cam {
-      flex: 0 0 250px;
+      flex: 1 1 0;
+      min-width: 0;
       background: #000;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -234,7 +246,7 @@
 </head>
 <body id="main-body">
 
-
+  <div id="alert-banner"></div>
 
   <header>
     <div class="brand">
@@ -258,6 +270,9 @@
         <option value="security">🔴 SecAudit (25 vuln ports)</option>
         <option value="allip">🔵 All Ports (1048 ports)</option>
       </select>
+      <button class="btn btn-s" onclick="toggleVoice()" id="btn-voice" title="Toggle Voice Alerts">🔇</button>
+      <button class="btn btn-s" onclick="toggleVisual()" id="btn-visual" title="Toggle Visual Alerts">🔔</button>
+      <button class="btn btn-s" onclick="setRtspPassword()" title="Set Camera Password">📷 PWD</button>
       <button class="btn btn-s" onclick="toggleView()"><span id="view-mode-label">GRID</span></button>
       <button class="btn btn-p" onclick="startScan()" id="scan-btn">⚡ SCAN</button>
     </div>
@@ -299,11 +314,14 @@
     <div id="scan-log"></div>
 
     <div id="bottom-cam-bar">
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 01</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 02</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 03</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">CAM 04</div></div>
-      <div class="mini-cam" onclick="location.href='4cam-view.html'"><iframe src="about:blank"></iframe><div class="mini-cam-label">NVR FEED</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 01</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 02</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 03</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 04</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 05</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 06</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 07</div></div>
+      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 08</div></div>
     </div>
 
 
@@ -353,6 +371,48 @@ const CVE_DATABASE = {
 let devices = [], knownIps = JSON.parse(localStorage.getItem('dash_known_ips')||'[]');
 let knownRegistry = [], serviceApps = [];
 let viewMode = 'GRID', scanning = false, abortCtl = null, secMode = false;
+let voiceEnabled = false, visualAlertsEnabled = true, bannerTimeout = null;
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  document.getElementById('btn-voice').textContent = voiceEnabled ? '🔊' : '🔇';
+  if (voiceEnabled) speak('Voice alerts enabled');
+}
+
+function toggleVisual() {
+  visualAlertsEnabled = !visualAlertsEnabled;
+  document.getElementById('btn-visual').textContent = visualAlertsEnabled ? '🔔' : '🔕';
+}
+
+function showAlertBanner(msg, type) {
+  if (!visualAlertsEnabled) return;
+  const b = document.getElementById('alert-banner');
+  b.textContent = msg;
+  b.className = 'banner-' + type + ' show';
+  clearTimeout(bannerTimeout);
+  bannerTimeout = setTimeout(() => { b.className = ''; }, 5000);
+}
+
+function setRtspPassword() {
+  const current = localStorage.getItem('dash_rtsp_pwd') || '';
+  const pwd = prompt("Enter RTSP Camera Password:", current);
+  if (pwd !== null) {
+    localStorage.setItem('dash_rtsp_pwd', pwd);
+    initCameras();
+  }
+}
+
+function initCameras() {
+  const rtspPwd = localStorage.getItem('dash_rtsp_pwd');
+  if (rtspPwd) {
+    document.querySelectorAll('#bottom-cam-bar iframe').forEach((iframe, i) => {
+      const ch = (i + 1).toString().padStart(2, '0');
+      iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250:554/ch${ch}/0`;
+    });
+  }
+}
+
+initCameras();
 
 // Load external registries (JSON + CSV)
 async function loadRegistries() {
@@ -467,7 +527,7 @@ function handleDeviceOnline(d) {
   if (was) {
     d.status = known ? 'ONLINE' : 'UNKNOWN';
     speak(known ? "Known device online: "+d.ip : "Unknown device connected");
-    if (!known) triggerEdgeAlert('orange');
+    if (!known) triggerEdgeAlert('orange', `UNKNOWN DEVICE CONNECTED: ${d.ip}`);
     log(`Device Up: ${d.ip} (${known?'Known':'UNKNOWN'})`);
   }
   d.lastSeen = new Date().toISOString();
@@ -477,18 +537,21 @@ function handleDeviceOnline(d) {
 function handleDeviceOffline(d) {
   if (d.status==='ONLINE'||d.status==='UNKNOWN') {
     d.status = 'OFFLINE_ANIM';
-    speak("Device offline", true); triggerEdgeAlert('red');
+    speak("Device offline", true); triggerEdgeAlert('red', `DEVICE OFFLINE: ${d.ip}`);
     log(`Device Offline: ${d.ip}`, 'red');
     setTimeout(() => { if (d.status==='OFFLINE_ANIM') { d.status='OFFLINE'; renderGrid(); } }, 60000);
   }
 }
 
-function triggerEdgeAlert(c) {
+function triggerEdgeAlert(c, msg) {
+  if (!visualAlertsEnabled) return;
   const b = document.getElementById('main-body');
   b.className = 'alert-'+c; setTimeout(() => b.className='', 5000);
+  if (msg) showAlertBanner(msg, c);
 }
 
 function speak(text, female=false) {
+  if (!voiceEnabled) return;
   const m = new SpeechSynthesisUtterance(text);
   if (female) { const v = speechSynthesis.getVoices().find(v => v.name.includes('female')||v.lang.includes('GB')); if (v) m.voice=v; }
   speechSynthesis.speak(m);
@@ -710,7 +773,12 @@ async function checkInternet() {
     latencyHistory.push(Math.min(latency, 100));
     if (latencyHistory.length > 15) latencyHistory.shift();
     
-    if (!inetUp) { inetUp = true; log('🟢 Internet gateway ONLINE'); }
+    if (!inetUp) { 
+      inetUp = true; 
+      log('🟢 Internet gateway ONLINE'); 
+      speak('Internet gateway online');
+      showAlertBanner('INTERNET GATEWAY RESTORED', 'green');
+    }
     document.getElementById('inet-dot').className = 'inet-dot inet-up';
     document.getElementById('inet-label').textContent = 'WAN ✓';
     document.getElementById('inet-label').style.color = 'var(--green)';
@@ -722,7 +790,7 @@ async function checkInternet() {
       inetUp = false; 
       log('🔴 Internet gateway OFFLINE', 'red'); 
       speak('Warning: Internet gateway offline', true); 
-      triggerEdgeAlert('red'); 
+      triggerEdgeAlert('red', 'WARNING: INTERNET GATEWAY OFFLINE'); 
     }
     document.getElementById('inet-dot').className = 'inet-dot inet-down';
     document.getElementById('inet-label').textContent = 'WAN ✗';

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoDash · Security 4-Cam</title>
+  <title>AutoDash · Security 8-Cam</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
     .back-btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.8rem; font-weight: 700; }
     
     .cam-container {
-      display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+      display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr;
       height: 100vh; width: 100vw; padding-top: 60px; box-sizing: border-box;
     }
     .cam-item { border: 1px solid var(--border); background: #000; position: relative; }
@@ -44,30 +44,51 @@
   <header>
     <div style="display: flex; align-items: center; gap: 15px;">
       <a href="index.html" class="back-btn">← BACK TO DASH</a>
-      <h1 style="font-size: 1rem; margin: 0;">SECURITY MATRIX :: 4-CHANNEL RTSP</h1>
+      <h1 style="font-size: 1rem; margin: 0;">SECURITY MATRIX :: 8-CHANNEL RTSP</h1>
+      <button class="back-btn" onclick="setRtspPassword()" style="background:var(--bg); border:1px solid var(--border)">📷 PWD</button>
     </div>
     <div style="font-family: 'JetBrains Mono'; font-size: 0.8rem; opacity: 0.6;" id="clock">00:00:00</div>
   </header>
 
   <div class="cam-container">
     <div class="cam-item">
-      <iframe src="about:blank"></iframe>
-      <div class="cam-title">CAM_01 :: NORTH_PERIMETER</div>
+      <iframe></iframe>
+      <div class="cam-title">CAM_01</div>
       <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
     </div>
     <div class="cam-item">
-      <iframe src="about:blank"></iframe>
-      <div class="cam-title">CAM_02 :: SOUTH_PERIMETER</div>
+      <iframe></iframe>
+      <div class="cam-title">CAM_02</div>
       <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
     </div>
     <div class="cam-item">
-      <iframe src="about:blank"></iframe>
-      <div class="cam-title">CAM_03 :: ENTRANCE_MAIN</div>
+      <iframe></iframe>
+      <div class="cam-title">CAM_03</div>
       <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
     </div>
     <div class="cam-item">
-      <iframe src="about:blank"></iframe>
-      <div class="cam-title">CAM_04 :: INTERNAL_OFFICE</div>
+      <iframe></iframe>
+      <div class="cam-title">CAM_04</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe></iframe>
+      <div class="cam-title">CAM_05</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe></iframe>
+      <div class="cam-title">CAM_06</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe></iframe>
+      <div class="cam-title">CAM_07</div>
+      <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
+    </div>
+    <div class="cam-item">
+      <iframe></iframe>
+      <div class="cam-title">CAM_08</div>
       <div class="cam-status"><div class="status-pulse"></div> LIVE</div>
     </div>
   </div>
@@ -78,6 +99,27 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    function setRtspPassword() {
+      const current = localStorage.getItem('dash_rtsp_pwd') || '';
+      const pwd = prompt("Enter RTSP Camera Password:", current);
+      if (pwd !== null) {
+        localStorage.setItem('dash_rtsp_pwd', pwd);
+        initCameras();
+      }
+    }
+
+    function initCameras() {
+      const rtspPwd = localStorage.getItem('dash_rtsp_pwd');
+      if (rtspPwd) {
+        document.querySelectorAll('.cam-item iframe').forEach((iframe, i) => {
+          const ch = (i + 1).toString().padStart(2, '0');
+          iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250:554/ch${ch}/0`;
+        });
+      }
+    }
+    
+    initCameras();
   </script>
 </body>
 </html>
