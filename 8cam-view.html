@@ -100,8 +100,30 @@
     setInterval(updateClock, 1000);
     updateClock();
 
+    async function loadEnv() {
+      try {
+        const res = await fetch('.env');
+        if (res.ok) {
+          const text = await res.text();
+          const lines = text.split('\n');
+          lines.forEach(line => {
+            const parts = line.split('=');
+            if (parts.length === 2) {
+              const key = parts[0].trim();
+              const val = parts[1].trim();
+              if (key === 'RTSP_PASSWORD') {
+                localStorage.setItem('dash_rtsp_pwd', val);
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Could not load .env file", e);
+      }
+    }
+
     function setRtspPassword() {
-      const current = localStorage.getItem('dash_rtsp_pwd') || '';
+      const current = localStorage.getItem('dash_rtsp_pwd') || '781869a';
       const pwd = prompt("Enter RTSP Camera Password:", current);
       if (pwd !== null) {
         localStorage.setItem('dash_rtsp_pwd', pwd);
@@ -109,14 +131,13 @@
       }
     }
 
-    function initCameras() {
-      const rtspPwd = localStorage.getItem('dash_rtsp_pwd');
-      if (rtspPwd) {
-        document.querySelectorAll('.cam-item iframe').forEach((iframe, i) => {
-          const ch = (i + 1).toString().padStart(2, '0');
-          iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250:554/ch${ch}/0`;
-        });
-      }
+    async function initCameras() {
+      await loadEnv();
+      const rtspPwd = localStorage.getItem('dash_rtsp_pwd') || '781869a';
+      document.querySelectorAll('.cam-item iframe').forEach((iframe, i) => {
+        const ch = (i + 1).toString().padStart(2, '0');
+        iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250/ch05/${ch}`;
+      });
     }
     
     initCameras();

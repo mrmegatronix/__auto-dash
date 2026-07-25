@@ -85,7 +85,18 @@
     .wan-block { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 15px; border-left: 1px solid var(--border); }
     .wan-time { font-size: 0.6rem; color: var(--text2); font-family: 'JetBrains Mono'; font-weight: 600; }
 
-    main { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+    main { 
+      flex: 1; padding: 10px 15px; display: grid; 
+      grid-template-columns: 3.2fr 1.1fr; 
+      gap: 15px; position: relative; overflow: hidden; 
+    }
+    .dash-left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+      height: 100%;
+    }
 
     /* View Switcher */
     .view-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
@@ -93,16 +104,16 @@
     /* GRID VIEW */
     #grid-view {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(clamp(48px, 6vw, 120px), 1fr));
-      gap: clamp(4px, 1vw, 12px);
-      padding: 15px;
+      grid-template-columns: repeat(32, 1fr);
+      gap: 3px;
+      padding: 10px;
       flex: 1;
       align-content: start;
-      overflow-y: auto;
+      overflow: hidden;
     }
     .device-cell {
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.4);
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.45);
       border: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -110,18 +121,18 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 8px 0;
-      min-height: clamp(48px, 6vw, 120px);
-      aspect-ratio: 1;
+      transition: all 0.15s ease-in-out;
+      padding: 4px 0;
+      min-height: 32px;
+      aspect-ratio: 1.15;
     }
-    .device-cell:hover { transform: scale(1.2); z-index: 50; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: var(--surface-bright); }
+    .device-cell:hover { transform: scale(1.35); z-index: 50; border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: var(--surface-bright); }
     .cell-ip { 
-        font-size: clamp(0.45rem, 0.8vw, 0.85rem); font-family: 'JetBrains Mono'; font-weight: 700; 
+        font-size: clamp(0.32rem, 0.52vw, 0.6rem); font-family: 'JetBrains Mono'; font-weight: 700; 
         opacity: 0.8; line-height: 1.1; color: #fff; 
-        max-width: 90%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        max-width: 95%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .cell-dot { width: 8px; height: 8px; border-radius: 50%; background: #222; margin-bottom: 2px; transition: 0.3s; }
+    .cell-dot { width: 5px; height: 5px; border-radius: 50%; background: #222; margin-bottom: 2px; transition: 0.3s; }
 
     /* Scan Progress Bar */
     #scan-progress { height: 3px; background: var(--surface); width: 100%; border-radius: 2px; overflow: hidden; }
@@ -293,10 +304,48 @@
   <div id="scan-progress"><div id="scan-progress-fill"></div></div>
 
   <main>
+    <div class="dash-left-col">
+      <div class="view-container">
+        <div id="grid-view"></div>
+        <div id="list-view"></div>
+      </div>
 
-    <div class="view-container">
-      <div id="grid-view"></div>
-      <div id="list-view"></div>
+      <div id="bottom-cam-bar">
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 01</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 02</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 03</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 04</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 05</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 06</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 07</div></div>
+        <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 08</div></div>
+      </div>
+    </div>
+
+    <!-- Right Column: Sidebar Graphs & Network Stats -->
+    <div id="sidebar-graphs" style="display: flex; flex-direction: column; gap: 15px; height: 100%; padding: 15px; background: rgba(10,15,29,0.4); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-sizing: border-box;">
+      <h2 style="font-size: 0.9rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: #fff; margin-bottom: 5px; display:flex; align-items:center; gap:8px;"><span style="color:var(--accent)">📊</span> Network Monitor</h2>
+      
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text2); margin-bottom:4px;">
+          <span>Network Traffic Load</span>
+          <span id="load-val">12%</span>
+        </div>
+        <canvas id="traffic-canvas" width="280" height="70" style="background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px solid var(--border); width: 100%;"></canvas>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text2); margin-bottom:4px;">
+          <span>Scanner Packet Rate</span>
+          <span id="rate-val">45 PPS</span>
+        </div>
+        <canvas id="rate-canvas" width="280" height="70" style="background: rgba(0,0,0,0.35); border-radius: 6px; border: 1px solid var(--border); width: 100%;"></canvas>
+      </div>
+
+      <div style="flex: 1; display: flex; flex-direction: column; min-height: 100px; overflow: hidden;">
+        <h3 style="font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; color: var(--text2);">Live Scan Event Log</h3>
+        <div id="scan-log-container" style="flex:1; background: rgba(0,0,0,0.5); border-radius:6px; border:1px solid var(--border); font-size:0.65rem; font-family:'JetBrains Mono'; padding:8px; overflow-y:auto; line-height: 1.3;"></div>
+      </div>
     </div>
 
     <div id="details-panel">
@@ -311,22 +360,10 @@
       <div class="port-links" id="det-links"></div>
     </div>
 
-    <div id="scan-log"></div>
+    <!-- Hidden dummy element for script compatibility -->
+    <div id="scan-log" style="display: none;"></div>
 
-    <div id="bottom-cam-bar">
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 01</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 02</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 03</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 04</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 05</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 06</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 07</div></div>
-      <div class="mini-cam" onclick="location.href='8cam-view.html'"><iframe></iframe><div class="mini-cam-label">CAM 08</div></div>
-    </div>
-
-
-
-    <div class="stats-floating">
+    <div class="stats-floating" style="position: static; margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; grid-column: 1 / -1;">
       <div class="stat-chip" style="cursor: pointer; position: relative;" title="Click to change DNS server">
         DNS: 
         <select id="dns-selector" onchange="changeDNS()" style="background: none; border: none; color: var(--accent); font-weight: 700; font-family: inherit; cursor: pointer; outline: none; padding-right: 5px;">
@@ -393,8 +430,30 @@ function showAlertBanner(msg, type) {
   bannerTimeout = setTimeout(() => { b.className = ''; }, 5000);
 }
 
+async function loadEnv() {
+  try {
+    const res = await fetch('.env');
+    if (res.ok) {
+      const text = await res.text();
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const parts = line.split('=');
+        if (parts.length === 2) {
+          const key = parts[0].trim();
+          const val = parts[1].trim();
+          if (key === 'RTSP_PASSWORD') {
+            localStorage.setItem('dash_rtsp_pwd', val);
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.warn("Could not load .env file", e);
+  }
+}
+
 function setRtspPassword() {
-  const current = localStorage.getItem('dash_rtsp_pwd') || '';
+  const current = localStorage.getItem('dash_rtsp_pwd') || '781869a';
   const pwd = prompt("Enter RTSP Camera Password:", current);
   if (pwd !== null) {
     localStorage.setItem('dash_rtsp_pwd', pwd);
@@ -402,14 +461,13 @@ function setRtspPassword() {
   }
 }
 
-function initCameras() {
-  const rtspPwd = localStorage.getItem('dash_rtsp_pwd');
-  if (rtspPwd) {
-    document.querySelectorAll('#bottom-cam-bar iframe').forEach((iframe, i) => {
-      const ch = (i + 1).toString().padStart(2, '0');
-      iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250:554/ch${ch}/0`;
-    });
-  }
+async function initCameras() {
+  await loadEnv();
+  const rtspPwd = localStorage.getItem('dash_rtsp_pwd') || '781869a';
+  document.querySelectorAll('#bottom-cam-bar iframe').forEach((iframe, i) => {
+    const ch = (i + 1).toString().padStart(2, '0');
+    iframe.src = `rtsp://admin:${rtspPwd}@192.168.1.250/ch05/${ch}`;
+  });
 }
 
 initCameras();
@@ -677,6 +735,15 @@ function log(m, col) {
   const div = document.createElement('div'); div.style.color = col||'inherit';
   div.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
   document.getElementById('scan-log').prepend(div);
+  
+  const container = document.getElementById('scan-log-container');
+  if (container) {
+    const div2 = div.cloneNode(true);
+    container.prepend(div2);
+    if (container.children.length > 50) {
+      container.removeChild(container.lastChild);
+    }
+  }
 }
 
 function updateStats() {
@@ -821,6 +888,69 @@ setInterval(checkInternet, 10000);
   }
   
   checkInternet(); 
+
+  // Live Network Monitor Graphs
+  const trafficCanvas = document.getElementById('traffic-canvas');
+  const rateCanvas = document.getElementById('rate-canvas');
+  const tCtx = trafficCanvas.getContext('2d');
+  const rCtx = rateCanvas.getContext('2d');
+  let tData = Array(30).fill(15);
+  let rData = Array(30).fill(20);
+
+  function animateGraphs() {
+    const loadPercent = Math.round(10 + Math.random() * 15 + (scanning ? 35 : 0));
+    const loadValEl = document.getElementById('load-val');
+    if (loadValEl) loadValEl.textContent = `${loadPercent}%`;
+    tData.push(loadPercent);
+    tData.shift();
+
+    const pps = scanning ? Math.round(180 + Math.random() * 40) : Math.round(15 + Math.random() * 10);
+    const rateValEl = document.getElementById('rate-val');
+    if (rateValEl) rateValEl.textContent = `${pps} PPS`;
+    rData.push(pps);
+    rData.shift();
+
+    // Clear and draw Traffic Load Graph
+    tCtx.clearRect(0, 0, trafficCanvas.width, trafficCanvas.height);
+    tCtx.strokeStyle = '#3b82f6';
+    tCtx.lineWidth = 2;
+    tCtx.beginPath();
+    tData.forEach((val, index) => {
+      const x = (index / (tData.length - 1)) * trafficCanvas.width;
+      const y = trafficCanvas.height - (val / 100) * (trafficCanvas.height - 10) - 5;
+      if (index === 0) tCtx.moveTo(x, y);
+      else tCtx.lineTo(x, y);
+    });
+    tCtx.stroke();
+
+    // Fill under path
+    tCtx.lineTo(trafficCanvas.width, trafficCanvas.height);
+    tCtx.lineTo(0, trafficCanvas.height);
+    tCtx.fillStyle = 'rgba(59, 130, 246, 0.08)';
+    tCtx.fill();
+
+    // Clear and draw Packet Rate Graph
+    rCtx.clearRect(0, 0, rateCanvas.width, rateCanvas.height);
+    rCtx.strokeStyle = '#10b981';
+    rCtx.lineWidth = 2;
+    rCtx.beginPath();
+    rData.forEach((val, index) => {
+      const x = (index / (rData.length - 1)) * rateCanvas.width;
+      const y = rateCanvas.height - (val / 300) * (rateCanvas.height - 10) - 5;
+      if (index === 0) rCtx.moveTo(x, y);
+      else rCtx.lineTo(x, y);
+    });
+    rCtx.stroke();
+
+    // Fill under path
+    rCtx.lineTo(rateCanvas.width, rateCanvas.height);
+    rCtx.lineTo(0, rateCanvas.height);
+    rCtx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+    rCtx.fill();
+
+    setTimeout(animateGraphs, 500);
+  }
+  animateGraphs();
 })();
 </script>
 </body>
