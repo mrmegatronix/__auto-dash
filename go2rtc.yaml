@@ -1,0 +1,32 @@
+# go2rtc configuration for __auto-dash Security 8-Channel NVR / Cameras
+# NVR IP: 192.168.1.250
+
+streams:
+  ch01:
+    - rtsp://admin:781869a@192.168.1.250/ch05/01
+  ch02:
+    - rtsp://admin:781869a@192.168.1.250/ch05/02
+  ch03:
+    - rtsp://admin:781869a@192.168.1.250/ch05/03
+  ch04:
+    - rtsp://admin:781869a@192.168.1.250/ch05/04
+  ch05:
+    - rtsp://admin:781869a@192.168.1.250/ch05/05
+  ch06:
+    - rtsp://admin:781869a@192.168.1.250/ch05/06
+  ch07:
+    - rtsp://admin:781869a@192.168.1.250/ch05/07
+  ch08:
+    - rtsp://admin:781869a@192.168.1.250/ch05/08
+
+api:
+  listen: ":1984" # HTTP WebRTC / MSE / HLS / WebSocket API
+
+webrtc:
+  listen: ":8555" # WebRTC UDP / TCP
+  candidates:
+    - "127.0.0.1"
+    - "192.168.1.250"
+
+log:
+  level: "info"
