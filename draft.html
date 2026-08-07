@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="./video-rtc.js"></script>
+  <script type="module" src="./camera-stream.js"></script>
   <style>
     :root {
       --bg: #030712;
@@ -1028,84 +1030,52 @@
     </div>
 
     <div class="cam-grid">
-      <!-- 8 Cameras ch01 through ch08 -->
-      <div class="cam-cell" onclick="openCamFull(1)">
+      <!-- 8 Cameras ch01 through ch08 with live WebRTC/MSE streaming -->
+      <div class="cam-cell" onclick="openCamModal(1)">
         <div class="cam-tag">CAM 01</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-1">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch01" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch01/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(2)">
+      <div class="cam-cell" onclick="openCamModal(2)">
         <div class="cam-tag">CAM 02</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-2">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch02" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch02/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(3)">
+      <div class="cam-cell" onclick="openCamModal(3)">
         <div class="cam-tag">CAM 03</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-3">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch03" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch03/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(4)">
+      <div class="cam-cell" onclick="openCamModal(4)">
         <div class="cam-tag">CAM 04</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-4">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch04" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch04/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(5)">
+      <div class="cam-cell" onclick="openCamModal(5)">
         <div class="cam-tag">CAM 05</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-5">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch05" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch05/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(6)">
+      <div class="cam-cell" onclick="openCamModal(6)">
         <div class="cam-tag">CAM 06</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-6">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch06" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch06/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(7)">
+      <div class="cam-cell" onclick="openCamModal(7)">
         <div class="cam-tag">CAM 07</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-7">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch07" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch07/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
 
-      <div class="cam-cell" onclick="openCamFull(8)">
+      <div class="cam-cell" onclick="openCamModal(8)">
         <div class="cam-tag">CAM 08</div>
-        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
-        <div class="cam-placeholder-feed" id="cam-feed-8">
-          <div class="cam-scanline"></div>
-          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
-        </div>
+        <camera-feed src="ch08" server="http://127.0.0.1:1984"></camera-feed>
         <a href="rtsp://admin:781869a@192.168.1.250/ch08/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
       </div>
     </div>
@@ -1190,42 +1160,118 @@
     </div>
   </div>
 
-  <script type="module">
-    // Auto-stream go2rtc integration for bottom CCTV
-    import { CameraStream } from './camera-stream.js';
+  <!-- High-Definition CCTV Camera Modal -->
+  <div id="cam-modal" class="modal-backdrop" onclick="if(event.target === this) closeCamModal()">
+    <div class="modal-box" style="max-width:860px;width:95%;">
+      <div class="modal-header">
+        <div style="font-family:'Chakra Petch';font-weight:700;font-size:1.1rem;color:#fff;display:flex;align-items:center;gap:8px;">
+          <span>📹</span> <span id="cam-modal-title">CCTV CAMERA FEED :: CAM 01</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a id="cam-modal-matrix-btn" href="8cam-view.html" target="_blank" class="btn-cyber btn-cyber-outline" style="padding:2px 8px;font-size:0.7rem;">↗ FULL MATRIX</a>
+          <button class="drawer-close-btn" onclick="closeCamModal()">×</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding:16px;">
+        <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;" id="cam-modal-tabs"></div>
+        <div style="position:relative;width:100%;height:440px;background:#000;border-radius:6px;overflow:hidden;border:1px solid var(--panel-border);" id="cam-modal-video-container"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:0.75rem;color:var(--text-muted);flex-wrap:wrap;gap:8px;">
+          <div style="font-family:'JetBrains Mono';display:flex;gap:12px;align-items:center;">
+            <span id="cam-modal-rtsp-text" style="word-break:break-all;">rtsp://admin:781869a@192.168.1.250/ch01/01</span>
+            <button class="btn-cyber btn-cyber-outline" style="padding:2px 6px;font-size:0.65rem;" onclick="copyRtspUrl()">📋 COPY</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-cyber btn-cyber-outline" onclick="captureCamSnapshot()">📸 SNAPSHOT</button>
+            <button class="btn-cyber btn-cyber-primary" onclick="fullscreenCam()">⛶ FULLSCREEN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    window.initGo2RtcFeeds = function() {
-      const serverUrl = `http://${window.location.hostname || 'localhost'}:1984`;
+  <script>
+    let currentModalCam = 1;
+
+    window.openCamModal = function(camNum) {
+      currentModalCam = camNum;
+      document.getElementById('cam-modal').classList.add('active');
+      renderCamModalTabs();
+      loadModalCamFeed(camNum);
+    };
+
+    window.closeCamModal = function() {
+      document.getElementById('cam-modal').classList.remove('active');
+      const container = document.getElementById('cam-modal-video-container');
+      if (container) container.innerHTML = '';
+    };
+
+    function renderCamModalTabs() {
+      const tabs = document.getElementById('cam-modal-tabs');
+      if (!tabs) return;
+      tabs.innerHTML = '';
       for (let i = 1; i <= 8; i++) {
-        const ch = `ch${i.toString().padStart(2, '0')}`;
-        const container = document.getElementById(`cam-feed-${i}`);
-        if (!container) continue;
+        const btn = document.createElement('button');
+        btn.className = `btn-cyber ${i === currentModalCam ? 'btn-cyber-primary' : 'btn-cyber-outline'}`;
+        btn.style.padding = '4px 10px';
+        btn.style.fontSize = '0.7rem';
+        btn.textContent = `CAM 0${i}`;
+        btn.onclick = () => {
+          currentModalCam = i;
+          renderCamModalTabs();
+          loadModalCamFeed(i);
+        };
+        tabs.appendChild(btn);
+      }
+    }
 
-        // Create HTML5 Video inside container
-        const video = document.createElement('video');
-        video.autoplay = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.style.width = '100%';
-        video.style.height = '100%';
-        video.style.objectFit = 'cover';
+    function loadModalCamFeed(camNum) {
+      const ch = `ch${camNum.toString().padStart(2, '0')}`;
+      const title = document.getElementById('cam-modal-title');
+      const rtspText = document.getElementById('cam-modal-rtsp-text');
+      const container = document.getElementById('cam-modal-video-container');
+      const pwd = localStorage.getItem('dash_rtsp_pwd') || '781869a';
+      
+      if (title) title.textContent = `CCTV CAMERA FEED :: CAM 0${camNum} [${ch.toUpperCase()}]`;
+      if (rtspText) rtspText.textContent = `rtsp://admin:${pwd}@192.168.1.250/${ch}/01`;
 
-        try {
-          const stream = new CameraStream(video, {
-            serverUrl,
-            streamName: ch,
-            mode: 'auto',
-            onStatus: ({ state }) => {
-              if (state === 'playing') {
-                container.innerHTML = '';
-                container.appendChild(video);
-              }
-            }
-          });
-          stream.start();
-        } catch(e) {
-          console.warn('go2rtc stream init fallback:', e);
-        }
+      if (container) {
+        container.innerHTML = `
+          <camera-feed src="${ch}" server="http://127.0.0.1:1984" style="width:100%;height:100%;display:block;"></camera-feed>
+        `;
+      }
+    }
+
+    window.copyRtspUrl = function() {
+      const text = document.getElementById('cam-modal-rtsp-text')?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        triggerToast('RTSP URL copied to clipboard!', 'ok');
+      });
+    };
+
+    window.captureCamSnapshot = function() {
+      const container = document.getElementById('cam-modal-video-container');
+      const video = container ? container.querySelector('video') : null;
+      if (video && video.videoWidth) {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const a = document.createElement('a');
+        a.download = `cctv_cam0${currentModalCam}_${Date.now()}.jpg`;
+        a.href = canvas.toDataURL('image/jpeg');
+        a.click();
+        triggerToast('Snapshot captured & downloaded!', 'ok');
+      } else {
+        triggerToast('Snapshot unavailable (waiting for active frame)', 'warn');
+      }
+    };
+
+    window.fullscreenCam = function() {
+      const container = document.getElementById('cam-modal-video-container');
+      if (container) {
+        if (container.requestFullscreen) container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
       }
     };
   </script>
@@ -1816,7 +1862,7 @@
     };
 
     window.openCamFull = function(num) {
-      window.open(`8cam-view.html?cam=${num}`, '_blank');
+      openCamModal(num);
     };
 
     window.onPresetChange = function() {

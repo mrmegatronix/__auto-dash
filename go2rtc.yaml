@@ -4,29 +4,38 @@
 streams:
   ch01:
     - rtsp://admin:781869a@192.168.1.250/ch01/01
+    - rtsp://admin:781869a@192.168.1.250/ch01/0
   ch02:
     - rtsp://admin:781869a@192.168.1.250/ch02/01
+    - rtsp://admin:781869a@192.168.1.250/ch02/0
   ch03:
     - rtsp://admin:781869a@192.168.1.250/ch03/01
+    - rtsp://admin:781869a@192.168.1.250/ch03/0
   ch04:
     - rtsp://admin:781869a@192.168.1.250/ch04/01
+    - rtsp://admin:781869a@192.168.1.250/ch04/0
   ch05:
     - rtsp://admin:781869a@192.168.1.250/ch05/01
+    - rtsp://admin:781869a@192.168.1.250/ch05/0
   ch06:
     - rtsp://admin:781869a@192.168.1.250/ch06/01
+    - rtsp://admin:781869a@192.168.1.250/ch06/0
   ch07:
     - rtsp://admin:781869a@192.168.1.250/ch07/01
+    - rtsp://admin:781869a@192.168.1.250/ch07/0
   ch08:
     - rtsp://admin:781869a@192.168.1.250/ch08/01
+    - rtsp://admin:781869a@192.168.1.250/ch08/0
 
 api:
   listen: ":1984" # HTTP WebRTC / MSE / HLS / WebSocket API
+  origin: "*"
 
 webrtc:
   listen: ":8555" # WebRTC UDP / TCP
   candidates:
     - "127.0.0.1"
-    - "192.168.1.250"
+    - "192.168.1.174"
 
 log:
   level: "info"

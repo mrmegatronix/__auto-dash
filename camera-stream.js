@@ -1,262 +1,143 @@
 /**
  * CameraStream - High-performance WebRTC / MSE / HLS player for go2rtc.
- * Guarantees zero-interaction autoplay on page load by enforcing muted/playsinline policies.
+ * Powered by VideoRTC engine with automated fallbacks, reconnection, and UI overlays.
  */
+import { VideoRTC } from './video-rtc.js';
+
+export { VideoRTC };
+
 export class CameraStream {
   /**
-   * @param {HTMLVideoElement} videoElement 
+   * @param {HTMLElement|HTMLVideoElement} targetElement 
    * @param {Object} options
-   * @param {string} options.serverUrl - Base URL of go2rtc API (e.g., "http://localhost:1984")
-   * @param {string} options.streamName - Stream identifier defined in go2rtc.yaml (e.g. "ch01")
-   * @param {string} [options.mode="auto"] - "webrtc" | "mse" | "hls" | "auto"
-   * @param {boolean} [options.reconnect=true] - Auto-reconnect on disconnect
+   * @param {string} options.serverUrl - Base URL of go2rtc API (e.g. "http://127.0.0.1:1984")
+   * @param {string} options.streamName - Stream identifier (e.g. "ch01")
+   * @param {string} [options.mode="webrtc,mse,hls,mjpeg"]
    * @param {function} [options.onStatus] - Callback for status changes
    */
-  constructor(videoElement, options = {}) {
-    this.video = videoElement;
-    this.serverUrl = (options.serverUrl || `http://${window.location.hostname || 'localhost'}:1984`).replace(/\/+$/, '');
+  constructor(targetElement, options = {}) {
+    this.target = targetElement;
+    this.serverUrl = (options.serverUrl || `http://${window.location.hostname || '127.0.0.1'}:1984`).replace(/\/+$/, '');
     this.streamName = options.streamName || 'ch01';
-    this.mode = options.mode || 'auto';
-    this.reconnect = options.reconnect !== false;
+    this.mode = options.mode || 'webrtc,mse,hls,mjpeg';
     this.onStatus = options.onStatus || (() => {});
-
-    this.pc = null;
-    this.ws = null;
-    this.reconnectTimer = null;
-    this.retryCount = 0;
+    this.videoRtc = null;
     this.destroyed = false;
-
-    this.setupVideoElement();
   }
 
-  setupVideoElement() {
-    this.video.muted = true;
-    this.video.defaultMuted = true;
-    this.video.autoplay = true;
-    this.video.playsInline = true;
-    this.video.setAttribute('playsinline', '');
-    this.video.setAttribute('muted', '');
-    this.video.setAttribute('autoplay', '');
-  }
-
-  async start() {
+  start() {
     if (this.destroyed) return;
     this.cleanup();
+
+    const wsProto = this.serverUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsHost = this.serverUrl.replace(/^https?:\/\//, '');
+    const wsUrl = `${wsProto}://${wsHost}/api/ws?src=${encodeURIComponent(this.streamName)}`;
+
+    this.videoRtc = new VideoRTC();
+    this.videoRtc.mode = this.mode;
+    this.videoRtc.background = true;
+    this.videoRtc.src = wsUrl;
+    this.videoRtc.style.width = '100%';
+    this.videoRtc.style.height = '100%';
+    this.videoRtc.style.display = 'block';
+
+    if (this.target.tagName.toLowerCase() === 'video') {
+      const parent = this.target.parentElement;
+      if (parent) {
+        parent.replaceChild(this.videoRtc, this.target);
+      }
+    } else {
+      this.target.innerHTML = '';
+      this.target.appendChild(this.videoRtc);
+    }
+
     this.onStatus({ state: 'connecting', stream: this.streamName });
 
-    if (this.mode === 'webrtc' || this.mode === 'auto') {
-      try {
-        await this.startWebRTC();
+    // Monitor internal video element events
+    const checkInterval = setInterval(() => {
+      if (this.destroyed || !this.videoRtc) {
+        clearInterval(checkInterval);
         return;
-      } catch (err) {
-        console.warn(`[CameraStream] WebRTC connection failed for ${this.streamName}, trying MSE fallback:`, err);
-        if (this.mode === 'auto') {
-          this.startMSE();
-          return;
-        }
-        this.scheduleReconnect();
       }
-    } else if (this.mode === 'mse') {
-      this.startMSE();
-    } else if (this.mode === 'hls') {
-      this.startHLS();
-    }
-  }
-
-  async startWebRTC() {
-    this.pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
-
-    this.pc.addTransceiver('video', { direction: 'recvonly' });
-    this.pc.addTransceiver('audio', { direction: 'recvonly' });
-
-    this.pc.ontrack = (event) => {
-      if (this.video.srcObject !== event.streams[0]) {
-        this.video.srcObject = event.streams[0];
-        this.video.play().catch((e) => console.warn('[CameraStream] Autoplay play() rejected:', e));
-        this.onStatus({ state: 'playing', mode: 'webrtc', stream: this.streamName });
+      const vid = this.videoRtc.querySelector('video');
+      if (vid && vid.readyState >= 2 && !vid.paused) {
+        this.onStatus({ state: 'playing', mode: 'live', stream: this.streamName });
       }
-    };
-
-    this.pc.onconnectionstatechange = () => {
-      const state = this.pc?.connectionState;
-      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-        this.onStatus({ state: 'disconnected', stream: this.streamName });
-        this.scheduleReconnect();
-      }
-    };
-
-    const offer = await this.pc.createOffer();
-    await this.pc.setLocalDescription(offer);
-
-    await new Promise((resolve) => {
-      if (this.pc.iceGatheringState === 'complete') {
-        resolve();
-      } else {
-        const checkState = () => {
-          if (this.pc.iceGatheringState === 'complete') {
-            this.pc.removeEventListener('icegatheringstatechange', checkState);
-            resolve();
-          }
-        };
-        this.pc.addEventListener('icegatheringstatechange', checkState);
-        setTimeout(resolve, 1500);
-      }
-    });
-
-    const url = `${this.serverUrl}/api/webrtc?src=${encodeURIComponent(this.streamName)}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      body: this.pc.localDescription.sdp,
-      headers: { 'Content-Type': 'application/sdp' }
-    });
-
-    if (!response.ok) {
-      throw new Error(`go2rtc WebRTC error: HTTP ${response.status}`);
-    }
-
-    const answerSdp = await response.text();
-    await this.pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
-    this.retryCount = 0;
-  }
-
-  startMSE() {
-    if (!('MediaSource' in window)) {
-      console.warn('[CameraStream] MSE not supported, falling back to HLS');
-      this.startHLS();
-      return;
-    }
-
-    const wsUrl = `${this.serverUrl.replace(/^http/, 'ws')}/api/ws?src=${encodeURIComponent(this.streamName)}`;
-    const ms = new MediaSource();
-    this.video.src = URL.createObjectURL(ms);
-
-    ms.addEventListener('sourceopen', () => {
-      this.ws = new WebSocket(wsUrl);
-      this.ws.binaryType = 'arraybuffer';
-
-      let sb = null;
-      const queue = [];
-
-      this.ws.onmessage = (event) => {
-        if (typeof event.data === 'string') {
-          const msg = JSON.parse(event.data);
-          if (msg.type === 'mse' && msg.value) {
-            sb = ms.addSourceBuffer(msg.value);
-            sb.mode = 'segments';
-            sb.addEventListener('updateend', () => {
-              if (queue.length > 0 && !sb.updating) {
-                sb.appendBuffer(queue.shift());
-              }
-            });
-          }
-          return;
-        }
-
-        if (sb) {
-          if (sb.updating || queue.length > 0) {
-            queue.push(event.data);
-          } else {
-            sb.appendBuffer(event.data);
-          }
-        }
-      };
-
-      this.ws.onopen = () => {
-        this.ws.send(JSON.stringify({ type: 'mse', value: ['video/mp4'] }));
-        this.video.play().catch(console.warn);
-        this.onStatus({ state: 'playing', mode: 'mse', stream: this.streamName });
-      };
-
-      this.ws.onerror = () => this.scheduleReconnect();
-      this.ws.onclose = () => this.scheduleReconnect();
-    });
-  }
-
-  startHLS() {
-    const hlsUrl = `${this.serverUrl}/api/stream.m3u8?src=${encodeURIComponent(this.streamName)}`;
-    this.video.src = hlsUrl;
-    this.video.play().catch(console.warn);
-    this.onStatus({ state: 'playing', mode: 'hls', stream: this.streamName });
-  }
-
-  scheduleReconnect() {
-    if (!this.reconnect || this.destroyed) return;
-    this.cleanup();
-    const delay = Math.min(1000 * Math.pow(1.5, this.retryCount), 15000);
-    this.retryCount++;
-    console.log(`[CameraStream] Reconnecting ${this.streamName} in ${delay}ms (attempt ${this.retryCount})`);
-    this.reconnectTimer = setTimeout(() => this.start(), delay);
+    }, 1000);
   }
 
   cleanup() {
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    if (this.ws) {
-      try { this.ws.close(); } catch (_) {}
-      this.ws = null;
-    }
-    if (this.pc) {
-      try { this.pc.close(); } catch (_) {}
-      this.pc = null;
+    if (this.videoRtc) {
+      try {
+        this.videoRtc.disconnectedCallback();
+        if (this.videoRtc.parentElement) {
+          this.videoRtc.parentElement.removeChild(this.videoRtc);
+        }
+      } catch (_) {}
+      this.videoRtc = null;
     }
   }
 
   destroy() {
     this.destroyed = true;
     this.cleanup();
-    if (this.video) {
-      this.video.srcObject = null;
-      this.video.src = '';
-    }
   }
 }
 
 /**
- * Custom Element <camera-feed src="ch01" server="http://localhost:1984">
+ * Custom Element <camera-feed src="ch01" server="http://127.0.0.1:1984">
  */
 export class CameraFeedElement extends HTMLElement {
   connectedCallback() {
     const streamName = this.getAttribute('src') || 'ch01';
-    const serverUrl = this.getAttribute('server') || `http://${window.location.hostname || 'localhost'}:1984`;
-    const mode = this.getAttribute('mode') || 'auto';
+    const serverUrl = this.getAttribute('server') || `http://${window.location.hostname || '127.0.0.1'}:1984`;
+    const mode = this.getAttribute('mode') || 'webrtc,mse,hls,mjpeg';
+
+    const wsProto = serverUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsHost = serverUrl.replace(/^https?:\/\//, '');
+    const wsUrl = `${wsProto}://${wsHost}/api/ws?src=${encodeURIComponent(streamName)}`;
 
     this.innerHTML = `
-      <div class="camera-feed-box" style="position:relative;width:100%;height:100%;background:#000;overflow:hidden;">
-        <video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>
-        <div class="cam-badge" style="position:absolute;bottom:10px;left:10px;padding:3px 8px;font-family:monospace;font-size:11px;color:#fff;background:rgba(0,0,0,0.65);border-radius:4px;border:1px solid rgba(255,255,255,0.15);pointer-events:none;">Connecting...</div>
-        <button class="cam-unmute-btn" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.65);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;z-index:20;">🔇</button>
+      <div class="camera-feed-box" style="position:relative;width:100%;height:100%;background:#04060a;overflow:hidden;border-radius:4px;">
+        <video-rtc src="${wsUrl}" mode="${mode}" background style="width:100%;height:100%;display:block;object-fit:cover;"></video-rtc>
+        <div class="cam-badge" style="position:absolute;bottom:8px;left:8px;padding:2px 6px;font-family:'Chakra Petch',monospace;font-size:10px;font-weight:700;color:#94a3b8;background:rgba(4,6,10,0.85);border-radius:3px;border:1px solid rgba(255,255,255,0.1);pointer-events:none;z-index:10;letter-spacing:0.5px;">
+          ${streamName.toUpperCase()} <span class="cam-dot" style="display:inline-block;width:6px;height:6px;background:#f59e0b;border-radius:50%;margin-left:4px;"></span>
+        </div>
+        <button class="cam-unmute-btn" title="Toggle Audio" style="position:absolute;bottom:8px;right:8px;background:rgba(4,6,10,0.85);color:#fff;border:1px solid rgba(255,255,255,0.15);padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;z-index:20;">🔇</button>
       </div>
     `;
 
-    const video = this.querySelector('video');
+    const vRtc = this.querySelector('video-rtc');
     const badge = this.querySelector('.cam-badge');
+    const dot = this.querySelector('.cam-dot');
     const unmuteBtn = this.querySelector('.cam-unmute-btn');
 
     unmuteBtn.onclick = (e) => {
       e.stopPropagation();
-      video.muted = !video.muted;
-      unmuteBtn.textContent = video.muted ? '🔇' : '🔊';
+      const video = vRtc ? vRtc.querySelector('video') : null;
+      if (video) {
+        video.muted = !video.muted;
+        unmuteBtn.textContent = video.muted ? '🔇' : '🔊';
+      }
     };
 
-    this.stream = new CameraStream(video, {
-      serverUrl,
-      streamName,
-      mode,
-      onStatus: ({ state, mode }) => {
-        if (badge) {
-          badge.textContent = `${streamName.toUpperCase()} [${state}${mode ? `:${mode}` : ''}]`;
-          badge.style.color = state === 'playing' ? '#4ade80' : '#f87171';
-        }
+    // State monitoring
+    this.statusTimer = setInterval(() => {
+      const video = vRtc ? vRtc.querySelector('video') : null;
+      if (video && video.readyState >= 2 && !video.paused) {
+        if (dot) dot.style.background = '#10b981';
+        if (badge) badge.style.color = '#34d399';
+      } else {
+        if (dot) dot.style.background = '#f59e0b';
+        if (badge) badge.style.color = '#94a3b8';
       }
-    });
-
-    this.stream.start();
+    }, 1500);
   }
 
   disconnectedCallback() {
-    if (this.stream) {
-      this.stream.destroy();
+    if (this.statusTimer) {
+      clearInterval(this.statusTimer);
+      this.statusTimer = null;
     }
   }
 }
