@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoDash :: Cyber SOC & Network Recon Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030712;
+      --bg-alt: #080e1e;
+      --panel: rgba(11, 19, 38, 0.75);
+      --panel-bright: rgba(18, 30, 60, 0.85);
+      --panel-border: rgba(56, 189, 248, 0.15);
+      --panel-border-bright: rgba(56, 189, 248, 0.4);
+      --accent: #06b6d4;
+      --accent-rgb: 6, 182, 212;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --crimson: #f43f5e;
+      --purple: #a855f7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dark: #64748b;
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.35);
+      --glow-red: 0 0 20px rgba(244, 63, 94, 0.45);
+      --glow-green: 0 0 20px rgba(16, 185, 129, 0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      user-select: none;
+    }
+
+    /* Cyber Matrix Canvas Grid Background */
+    #cyber-bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    /* Edge alert flashers */
+    .edge-alert-warn {
+      box-shadow: inset 0 0 0 6px var(--orange), inset 0 0 40px rgba(245, 158, 11, 0.4) !important;
+      animation: pulse-edge 1s infinite alternate;
+    }
+    .edge-alert-danger {
+      box-shadow: inset 0 0 0 6px var(--crimson), inset 0 0 50px rgba(244, 63, 94, 0.6) !important;
+      animation: pulse-edge 0.6s infinite alternate;
+    }
+    @keyframes pulse-edge {
+      0% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+
+    /* HUD Top Header */
+    header {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 20px;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.1));
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: var(--glow-cyan);
+    }
+
+    .brand-text h1 {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #fff;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-text h1 span {
+      color: var(--accent);
+      font-size: 0.7rem;
+      background: rgba(6, 182, 212, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+    .brand-text p {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    /* Controls Bar */
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(8, 14, 30, 0.6);
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--panel-border);
+    }
+
+    .input-subnet {
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      width: 120px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .input-subnet:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    .select-cyber {
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .select-cyber option {
+      background: #080e1e;
+      color: #fff;
+    }
+
+    .btn-cyber {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+    }
+    .btn-cyber:hover {
+      transform: translateY(-1px);
+    }
+    .btn-cyber-primary {
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      color: #fff;
+      box-shadow: var(--glow-cyan);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .btn-cyber-primary:hover {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+    }
+    .btn-cyber-sec {
+      background: linear-gradient(135deg, #f43f5e, #be123c);
+      color: #fff;
+      box-shadow: var(--glow-red);
+    }
+    .btn-cyber-outline {
+      background: rgba(8, 14, 30, 0.7);
+      border-color: var(--panel-border);
+      color: var(--text-muted);
+    }
+    .btn-cyber-outline:hover {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(6, 182, 212, 0.1);
+    }
+    .btn-cyber-outline.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* Telemetry HUD Chips */
+    .hud-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hud-chip {
+      background: rgba(8, 14, 30, 0.7);
+      border: 1px solid var(--panel-border);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .hud-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .threat-pill {
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .threat-low { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .threat-elevated { background: rgba(245, 158, 11, 0.2); color: var(--orange); border: 1px solid var(--orange); }
+    .threat-critical { background: rgba(244, 63, 94, 0.2); color: var(--crimson); border: 1px solid var(--crimson); animation: pulse 1s infinite; }
+
+    /* Progress bar */
+    #scan-progress-strip {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      position: relative;
+      z-index: 99;
+    }
+    #scan-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--purple), var(--crimson));
+      box-shadow: 0 0 10px var(--accent);
+      transition: width 0.2s linear;
+    }
+
+    /* Main Dashboard Layout */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 12px;
+      padding: 12px 16px 8px;
+      position: relative;
+      z-index: 10;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .main-center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    /* Filter & View Toolbar */
+    .matrix-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 6px 12px;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+    }
+    .filter-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
+    .filter-btn.active {
+      background: rgba(6, 182, 212, 0.2);
+      color: var(--accent);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    .search-input-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      padding: 3px 8px;
+    }
+    .search-input-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      width: 140px;
+    }
+
+    /* Matrix IP Radar Grid */
+    .matrix-viewport {
+      flex: 1;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 10px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #radar-grid {
+      display: grid;
+      grid-template-columns: repeat(32, 1fr);
+      gap: 3px;
+      width: 100%;
+      align-content: start;
+    }
+
+    .radar-node {
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 4px 1px;
+      min-height: 32px;
+      aspect-ratio: 1.15;
+    }
+    .radar-node:hover {
+      transform: scale(1.4);
+      z-index: 80;
+      border-color: var(--accent);
+      box-shadow: var(--glow-cyan);
+      background: #111e3b;
+    }
+    .node-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #334155;
+      margin-bottom: 2px;
+    }
+    .node-label {
+      font-size: clamp(0.32rem, 0.52vw, 0.58rem);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #fff;
+      max-width: 95%;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Node States */
+    .state-auth {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.6);
+    }
+    .state-auth .node-dot {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .state-unknown {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--orange);
+      animation: blink 1.2s infinite;
+    }
+    .state-unknown .node-dot {
+      background: var(--orange);
+      box-shadow: 0 0 10px var(--orange);
+    }
+
+    .state-vuln {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: var(--crimson);
+      box-shadow: inset 0 0 10px rgba(244, 63, 94, 0.4);
+      animation: blink 0.8s infinite;
+    }
+    .state-vuln .node-dot {
+      background: var(--crimson);
+      box-shadow: 0 0 12px var(--crimson);
+    }
+
+    .state-offline {
+      background: rgba(15, 23, 42, 0.3);
+      border-color: rgba(255,255,255,0.04);
+      opacity: 0.6;
+    }
+    .state-dead {
+      background: rgba(3, 7, 18, 0.4);
+      border-color: rgba(255,255,255,0.02);
+      opacity: 0.35;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    /* Table / List View */
+    #radar-list-view {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .list-host-card {
+      background: rgba(8, 14, 30, 0.7);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .list-host-card:hover {
+      border-color: var(--accent);
+      background: rgba(18, 30, 60, 0.9);
+      transform: translateX(4px);
+    }
+
+    /* Right Sidebar: SOC Telemetry & Intelligence Stream */
+    .soc-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .sidebar-card {
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 6px;
+    }
+    .card-header h3 {
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .radar-canvas-box {
+      width: 100%;
+      height: 75px;
+      background: rgba(3, 7, 18, 0.7);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--panel-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .radar-canvas-box canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Threat Feed Stream */
+    .threat-feed {
+      flex: 1;
+      background: rgba(3, 7, 18, 0.75);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+    .feed-entry {
+      padding: 3px 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.02);
+      border-left: 2px solid var(--text-dark);
+      line-height: 1.3;
+    }
+    .feed-entry.crit { border-color: var(--crimson); color: #fecdd3; background: rgba(244, 63, 94, 0.1); }
+    .feed-entry.warn { border-color: var(--orange); color: #fef3c7; background: rgba(245, 158, 11, 0.1); }
+    .feed-entry.info { border-color: var(--accent); color: #cffafe; }
+    .feed-entry.ok   { border-color: var(--green); color: #d1fae5; }
+
+    /* Bottom 8-Camera Security Surveillance Bar */
+    #bottom-cam-strip {
+      position: relative;
+      z-index: 50;
+      background: rgba(3, 7, 18, 0.95);
+      backdrop-filter: blur(25px);
+      border-top: 1px solid var(--panel-border);
+      padding: 8px 16px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .cam-strip-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+    }
+
+    .cam-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .cam-cell {
+      background: #000;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--panel-border);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cam-cell:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--glow-cyan);
+    }
+    .cam-cell video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .cam-placeholder-feed {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      position: relative;
+    }
+    .cam-scanline {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(18,24,38,0.1) 50%, rgba(0,0,0,0.4) 50%), linear-gradient(90deg, rgba(18,24,38,0.1) 50%, rgba(0,0,0,0.4) 50%);
+      background-size: 4px 4px;
+      pointer-events: none;
+    }
+    .cam-tag {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #fff;
+      z-index: 10;
+    }
+    .cam-live-indicator {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.55rem;
+      font-weight: 800;
+      color: var(--green);
+      background: rgba(0,0,0,0.85);
+      padding: 2px 5px;
+      border-radius: 4px;
+      z-index: 10;
+    }
+    .cam-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.2s infinite;
+    }
+    .cam-launch-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      font-size: 0.55rem;
+      background: rgba(6, 182, 212, 0.3);
+      border: 1px solid var(--accent);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      z-index: 15;
+      transition: all 0.2s;
+    }
+    .cam-launch-badge:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* Modal / Threat Detail Drawer */
+    #device-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: clamp(340px, 35vw, 560px);
+      background: rgba(5, 10, 24, 0.95);
+      backdrop-filter: blur(30px);
+      border-left: 2px solid var(--accent);
+      box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+      z-index: 2000;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    #device-drawer.open {
+      transform: translateX(0);
+    }
+    #device-drawer.threat-mode {
+      border-left-color: var(--crimson);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+    }
+    .drawer-close-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .drawer-close-btn:hover {
+      background: var(--crimson);
+      border-color: var(--crimson);
+    }
+
+    .port-radar-card {
+      background: rgba(8, 14, 30, 0.7);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.2s;
+    }
+    .port-radar-card:hover {
+      border-color: var(--accent);
+      transform: translateX(-4px);
+    }
+    .port-radar-card.risky {
+      border-color: rgba(244, 63, 94, 0.6);
+      background: rgba(244, 63, 94, 0.08);
+    }
+
+    .cve-badge-box {
+      background: rgba(244, 63, 94, 0.12);
+      border-left: 3px solid var(--crimson);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    /* Alert Banner */
+    #global-alert-toast {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-150%);
+      background: rgba(3, 7, 18, 0.95);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 12px 24px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      z-index: 3000;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+    #global-alert-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 2500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: rgba(11, 19, 38, 0.95);
+      border: 1px solid var(--panel-border-bright);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(6, 182, 212, 0.15);
+      width: min(540px, 92vw);
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-backdrop.open .modal-box {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: rgba(3, 7, 18, 0.5);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'Chakra Petch', sans-serif;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .form-control {
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+  </style>
+</head>
+<body id="soc-body">
+
+  <canvas id="cyber-bg-canvas"></canvas>
+  <div id="global-alert-toast"></div>
+
+  <!-- HUD Header -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo">🛡️</div>
+      <div class="brand-text">
+        <h1>AutoDash <span>SOC MATRIX</span></h1>
+        <p>Cyber Reconnaissance & Network Defense System</p>
+      </div>
+    </div>
+
+    <!-- Core Controls -->
+    <div class="controls-group">
+      <input type="text" id="subnet-val" value="192.168.1" class="input-subnet" title="Target Subnet CIDR /24">
+      <select id="scan-mode-preset" class="select-cyber" onchange="onPresetChange()">
+        <option value="ping">🟢 Host Discovery (Fast Ping 80,443,22,445)</option>
+        <option value="common">Standard Recon (22, 80, 443, 8080, 8443, 3000)</option>
+        <option value="web">Web Services (80, 443, 8000, 8080, 8443, 8888, 9000)</option>
+        <option value="infra">Infrastructure (21, 22, 25, 53, 110, 143, 445, 1883, 3306, 5432)</option>
+        <option value="security" selected>🔴 SecAudit & CVE Vector (25 Vulnerable Ports)</option>
+        <option value="intensive">Deep Radar (37 Known Ports)</option>
+        <option value="allip">🔵 Full Recon Matrix (1048 Ports)</option>
+      </select>
+      <button class="btn-cyber btn-cyber-primary" id="btn-scan" onclick="triggerScan()">⚡ EXECUTE SCAN</button>
+      <button class="btn-cyber btn-cyber-outline" id="btn-audit" onclick="triggerDeepAudit()" title="Perform Deep CVE Audit across all known hosts">🛡️ AUDIT ALL</button>
+      <button class="btn-cyber btn-cyber-outline" id="btn-view-toggle" onclick="toggleViewMode()">GRID</button>
+    </div>
+
+    <!-- Telemetry Badges & Hardware Flags -->
+    <div class="hud-chips">
+      <div class="hud-chip">
+        <span class="dot" style="background:var(--green);box-shadow:0 0 8px var(--green);" id="wan-dot"></span>
+        <span id="wan-status-text">WAN :: ONLINE</span>
+        <canvas id="wan-latency-sparkline" width="60" height="18"></canvas>
+      </div>
+      <div class="hud-chip">
+        <span>THREAT:</span>
+        <span class="threat-pill threat-low" id="threat-indicator">DEFCON 5</span>
+      </div>
+      <button class="btn-cyber btn-cyber-outline" id="btn-voice-toggle" onclick="toggleVoiceAlerts()" title="Voice Announcer">🔇</button>
+      <button class="btn-cyber btn-cyber-outline" id="btn-sound-toggle" onclick="toggleAudioFX()" title="Audio Telemetry">🔊</button>
+      <button class="btn-cyber btn-cyber-outline" onclick="openConfigModal()" title="System Configuration">⚙️</button>
+    </div>
+  </header>
+
+  <!-- Realtime progress -->
+  <div id="scan-progress-strip"><div id="scan-progress-bar"></div></div>
+
+  <!-- Main View -->
+  <main>
+    <div class="main-center-col">
+      <!-- Matrix Toolbar -->
+      <div class="matrix-toolbar">
+        <div class="filter-pills">
+          <button class="filter-btn active" onclick="setFilter('all', this)">ALL NODES (<span id="count-all">254</span>)</button>
+          <button class="filter-btn" onclick="setFilter('online', this)">ACTIVE (<span id="count-online">0</span>)</button>
+          <button class="filter-btn" onclick="setFilter('unknown', this)">ROGUE / UNKNOWN (<span id="count-unknown">0</span>)</button>
+          <button class="filter-btn" onclick="setFilter('risk', this)">VULNERABLE (<span id="count-risk">0</span>)</button>
+        </div>
+
+        <div class="search-input-box">
+          <span style="font-size:0.75rem;opacity:0.6;">🔍</span>
+          <input type="text" id="node-search" placeholder="Filter IP, Host, Port..." oninput="onSearchInput(this.value)">
+        </div>
+      </div>
+
+      <!-- Viewport: Grid or List -->
+      <div class="matrix-viewport">
+        <div id="radar-grid"></div>
+        <div id="radar-list-view"></div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar: SOC Telemetry -->
+    <div class="soc-sidebar">
+      <!-- Realtime Telemetry Graph -->
+      <div class="sidebar-card">
+        <div class="card-header">
+          <h3><span>📡</span> Traffic & Packet Radar</h3>
+          <span style="font-family:'JetBrains Mono';font-size:0.65rem;color:var(--accent);" id="pps-counter">24 PPS</span>
+        </div>
+        <div class="radar-canvas-box">
+          <canvas id="packet-radar-canvas" width="310" height="75"></canvas>
+        </div>
+      </div>
+
+      <!-- Quick Metrics HUD -->
+      <div class="sidebar-card">
+        <div class="card-header">
+          <h3><span>⚡</span> Network Security Posture</h3>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:rgba(3,7,18,0.5);border:1px solid var(--panel-border);padding:6px 10px;border-radius:4px;">
+            <div style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">SECURITY RATING</div>
+            <div id="posture-score" style="font-size:1.1rem;font-weight:900;color:var(--green);font-family:'Chakra Petch';">A+ (SECURE)</div>
+          </div>
+          <div style="background:rgba(3,7,18,0.5);border:1px solid var(--panel-border);padding:6px 10px;border-radius:4px;">
+            <div style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">OPEN PORTS AUDITED</div>
+            <div id="audited-ports-count" style="font-size:1.1rem;font-weight:900;color:var(--accent);font-family:'JetBrains Mono';">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Event / Threat Stream -->
+      <div class="sidebar-card" style="flex:1;min-height:180px;">
+        <div class="card-header">
+          <h3><span>🛡️</span> Incident & Telemetry Stream</h3>
+          <button onclick="clearIncidentLog()" style="background:none;border:none;color:var(--text-muted);font-size:0.65rem;cursor:pointer;">CLEAR</button>
+        </div>
+        <div class="threat-feed" id="incident-stream"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 8-Channel Surveillance Console -->
+  <div id="bottom-cam-strip">
+    <div class="cam-strip-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span>📹 PHYSICAL SECURITY CCTV :: 8-CHANNEL NVR (192.168.1.250)</span>
+        <span style="color:var(--accent);font-size:0.65rem;" id="cam-active-status">8 CAMERAS CONNECTED</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a href="8cam-view.html" class="btn-cyber btn-cyber-outline" style="padding:2px 8px;font-size:0.65rem;" target="_blank">↗ EXPAND MATRIX</a>
+        <button class="btn-cyber btn-cyber-outline" style="padding:2px 8px;font-size:0.65rem;" onclick="setRtspPassword()">📷 PWD</button>
+      </div>
+    </div>
+
+    <div class="cam-grid">
+      <!-- 8 Cameras ch01 through ch08 -->
+      <div class="cam-cell" onclick="openCamFull(1)">
+        <div class="cam-tag">CAM 01</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-1">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch01/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(2)">
+        <div class="cam-tag">CAM 02</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-2">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch02/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(3)">
+        <div class="cam-tag">CAM 03</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-3">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch03/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(4)">
+        <div class="cam-tag">CAM 04</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-4">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch04/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(5)">
+        <div class="cam-tag">CAM 05</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-5">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch05/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(6)">
+        <div class="cam-tag">CAM 06</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-6">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch06/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(7)">
+        <div class="cam-tag">CAM 07</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-7">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch07/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+
+      <div class="cam-cell" onclick="openCamFull(8)">
+        <div class="cam-tag">CAM 08</div>
+        <div class="cam-live-indicator"><div class="cam-pulse"></div> LIVE</div>
+        <div class="cam-placeholder-feed" id="cam-feed-8">
+          <div class="cam-scanline"></div>
+          <span style="font-size:1.4rem;color:var(--accent);">📹</span>
+        </div>
+        <a href="rtsp://admin:781869a@192.168.1.250/ch08/01" class="cam-launch-badge" onclick="event.stopPropagation();" target="_blank">RTSP</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Recon & Threat Drawer -->
+  <div id="device-drawer">
+    <div class="drawer-header">
+      <div>
+        <div style="font-size:0.65rem;color:var(--accent);font-family:'Chakra Petch';font-weight:700;letter-spacing:1px;" id="drawer-tag">TARGET INSPECTOR</div>
+        <h2 id="drawer-ip" style="font-family:'JetBrains Mono';font-size:1.5rem;color:#fff;">192.168.1.1</h2>
+        <p id="drawer-host" style="font-size:0.85rem;color:var(--text-muted);margin-top:2px;">Resolving identity...</p>
+      </div>
+      <button class="drawer-close-btn" onclick="closeDrawer()">×</button>
+    </div>
+
+    <!-- Quick Target Actions -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="btn-cyber btn-cyber-primary" style="flex:1;" onclick="scanTargetNode()">⚡ DEEP PROBE</button>
+      <button class="btn-cyber btn-cyber-outline" id="drawer-auth-btn" onclick="toggleNodeAuth()">AUTHORIZE</button>
+    </div>
+
+    <!-- Device Telemetry Details -->
+    <div id="drawer-telemetry" style="display:flex;flex-direction:column;gap:8px;font-size:0.75rem;margin-bottom:16px;"></div>
+
+    <!-- Open Ports & CVE Vectors -->
+    <div style="border-top:1px solid var(--panel-border);padding-top:14px;">
+      <h4 style="font-family:'Chakra Petch';font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;">DETECTED PORTS & CVE VECTORS</h4>
+      <div id="drawer-ports"></div>
+    </div>
+
+    <!-- Matched Service Signatures -->
+    <div style="border-top:1px solid var(--panel-border);padding-top:14px;margin-top:14px;" id="drawer-services-box">
+      <h4 style="font-family:'Chakra Petch';font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;">MATCHED SERVICE SIGNATURES</h4>
+      <div id="drawer-services"></div>
+    </div>
+  </div>
+
+  <!-- System Configuration Modal -->
+  <div id="config-modal" class="modal-backdrop" onclick="if(event.target === this) closeConfigModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-family:'Chakra Petch';font-weight:700;font-size:1.1rem;color:#fff;display:flex;align-items:center;gap:8px;">
+          <span>⚙️</span> SYSTEM CONFIGURATION & PARAMETERS
+        </div>
+        <button class="drawer-close-btn" onclick="closeConfigModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>NVR RTSP Password</label>
+          <input type="password" id="cfg-rtsp-pwd" class="form-control" placeholder="781869a" />
+          <span style="font-size:0.65rem;color:var(--text-muted);">Master password used for Dahua/Hikvision NVR camera streams (192.168.1.250).</span>
+        </div>
+
+        <div class="form-group">
+          <label>Default Subnet Prefix (/24)</label>
+          <input type="text" id="cfg-subnet" class="form-control" placeholder="192.168.1" />
+        </div>
+
+        <div class="form-group">
+          <label>Auto-Scan Refresh Interval</label>
+          <select id="cfg-scan-interval" class="form-control" style="cursor:pointer;">
+            <option value="0">Disabled (Manual Only)</option>
+            <option value="60">Every 1 Minute</option>
+            <option value="300" selected>Every 5 Minutes</option>
+            <option value="900">Every 15 Minutes</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn-cyber btn-cyber-outline" style="flex:1;" onclick="exportKnownHosts()">📥 EXPORT REGISTRY</button>
+          <label class="btn-cyber btn-cyber-outline" style="flex:1;text-align:center;cursor:pointer;margin:0;">
+            📤 IMPORT JSON
+            <input type="file" id="cfg-import-file" accept=".json" style="display:none;" onchange="importKnownHosts(event)" />
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cyber btn-cyber-outline" onclick="resetDefaults()">RESET DEFAULTS</button>
+        <button class="btn-cyber btn-cyber-primary" onclick="saveConfigModal()">SAVE & APPLY</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Auto-stream go2rtc integration for bottom CCTV
+    import { CameraStream } from './camera-stream.js';
+
+    window.initGo2RtcFeeds = function() {
+      const serverUrl = `http://${window.location.hostname || 'localhost'}:1984`;
+      for (let i = 1; i <= 8; i++) {
+        const ch = `ch${i.toString().padStart(2, '0')}`;
+        const container = document.getElementById(`cam-feed-${i}`);
+        if (!container) continue;
+
+        // Create HTML5 Video inside container
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+
+        try {
+          const stream = new CameraStream(video, {
+            serverUrl,
+            streamName: ch,
+            mode: 'auto',
+            onStatus: ({ state }) => {
+              if (state === 'playing') {
+                container.innerHTML = '';
+                container.appendChild(video);
+              }
+            }
+          });
+          stream.start();
+        } catch(e) {
+          console.warn('go2rtc stream init fallback:', e);
+        }
+      }
+    };
+  </script>
+
+  <script>
+    /* =========================================================================
+       Cyber SOC & Network Intelligence Engine
+       ========================================================================= */
+
+    const PORT_PRESETS = {
+      ping: [80, 443, 22, 445],
+      common: [22, 80, 443, 8080, 8443, 3000],
+      web: [80, 443, 8000, 8080, 8443, 8888, 9000],
+      infra: [21, 22, 23, 25, 53, 110, 143, 445, 1883, 3306, 5432, 6379],
+      security: [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 445, 587, 993, 995, 1433, 1723, 3306, 3389, 5060, 5432, 5900, 8080, 8443, 27017],
+      intensive: [21,22,23,25,53,80,110,111,135,139,143,443,445,548,587,631,993,995,1025,1723,1883,2049,3000,3001,3128,3306,3389,5000,5060,5432,5900,6379,8000,8080,9000,27017],
+      allip: [...Array.from({length:1024},(_, i)=>i+1), 1080,1433,1521,1723,1883,2049,3000,3001,3128,3306,3389,5000,5060,5432,5900,5984,6379,6667,8000,8080,8443,8888,9000,9090,9200,11211,27017,28017]
+    };
+
+    const PORT_INTEL = {
+      21: { n: 'FTP', r: 'HIGH', d: 'Cleartext file transfer protocol' },
+      22: { n: 'SSH', r: 'MED', d: 'Secure shell remote administration' },
+      23: { n: 'Telnet', r: 'CRITICAL', d: 'Unencrypted remote shell vector' },
+      25: { n: 'SMTP', r: 'MED', d: 'Mail relay transport' },
+      53: { n: 'DNS', r: 'LOW', d: 'Domain Name Resolution' },
+      80: { n: 'HTTP', r: 'LOW', d: 'Hypertext Web Server' },
+      110: { n: 'POP3', r: 'HIGH', d: 'Unencrypted Post Office mailbox' },
+      111: { n: 'RPCBind', r: 'HIGH', d: 'Remote Procedure Call daemon' },
+      135: { n: 'MSRPC', r: 'HIGH', d: 'Microsoft RPC Endpoint Mapper' },
+      139: { n: 'NetBIOS', r: 'HIGH', d: 'NetBIOS Session Service' },
+      143: { n: 'IMAP', r: 'MED', d: 'Internet Message Access Protocol' },
+      443: { n: 'HTTPS', r: 'LOW', d: 'TLS Encrypted Web' },
+      445: { n: 'SMB', r: 'CRITICAL', d: 'Active Windows Share / EternalBlue vector' },
+      548: { n: 'AFP', r: 'MED', d: 'Apple Filing Protocol' },
+      587: { n: 'SMTP-Sub', r: 'LOW', d: 'Encrypted Mail Submission' },
+      631: { n: 'CUPS', r: 'MED', d: 'Network Printing Daemon' },
+      993: { n: 'IMAPS', r: 'LOW', d: 'TLS Encrypted IMAP' },
+      995: { n: 'POP3S', r: 'LOW', d: 'TLS Encrypted POP3' },
+      1433: { n: 'MSSQL', r: 'CRITICAL', d: 'Microsoft SQL Server Database' },
+      1723: { n: 'PPTP', r: 'HIGH', d: 'Legacy VPN Tunnel' },
+      1883: { n: 'MQTT', r: 'HIGH', d: 'IoT Messaging Broker' },
+      2049: { n: 'NFS', r: 'HIGH', d: 'Network File System Export' },
+      3000: { n: 'NodeJS', r: 'LOW', d: 'Development / Web App Stack' },
+      3306: { n: 'MySQL', r: 'HIGH', d: 'MySQL Relational Database' },
+      3389: { n: 'RDP', r: 'CRITICAL', d: 'Remote Desktop Protocol / BlueKeep' },
+      5000: { n: 'UPnP', r: 'HIGH', d: 'Universal Plug & Play' },
+      5060: { n: 'SIP', r: 'HIGH', d: 'VoIP Signaling' },
+      5432: { n: 'PostgreSQL', r: 'HIGH', d: 'PostgreSQL Relational Database' },
+      5900: { n: 'VNC', r: 'CRITICAL', d: 'Virtual Network Computing Screen' },
+      6379: { n: 'Redis', r: 'HIGH', d: 'In-memory Data Store' },
+      8080: { n: 'HTTP-Alt', r: 'LOW', d: 'Secondary Web Proxy' },
+      8443: { n: 'HTTPS-Alt', r: 'LOW', d: 'Secondary Secure Web' },
+      27017: { n: 'MongoDB', r: 'CRITICAL', d: 'MongoDB NoSQL Database' }
+    };
+
+    const CVE_INTEL = {
+      21: { id: 'CVE-1999-0082', cvss: 7.5, name: 'FTP Cleartext Sniffing', desc: 'Credentials and session data can be intercepted via MITM. Upgrade to SFTP.' },
+      22: { id: 'CVE-2023-48795', cvss: 5.9, name: 'Terrapin SSH Downgrade', desc: 'Vulnerability in SSH transport protocol allows sequence number manipulation.' },
+      23: { id: 'CVE-2020-10188', cvss: 9.8, name: 'Telnet Execution Vector', desc: 'Critical unencrypted terminal access. Replace immediately with OpenSSH.' },
+      80: { id: 'OWASP-A3:2021', cvss: 5.3, name: 'Cleartext HTTP Exposure', desc: 'HTTP data transmitted unencrypted. Enforce HSTS and TLS redirection.' },
+      445: { id: 'CVE-2017-0144', cvss: 9.8, name: 'EternalBlue SMBv1 Exploit', desc: 'WannaCry / NotPetya remote code execution vector. Disable SMBv1 immediately.' },
+      1433: { id: 'CVE-2020-0618', cvss: 8.8, name: 'MSSQL Remote Code Execution', desc: 'Reporting Services remote execution flaw. Apply cumulative SQL patches.' },
+      3306: { id: 'CVE-2012-2122', cvss: 7.5, name: 'MySQL Auth Bypass', desc: 'Improper password hash comparison flaw. Limit binds to 127.0.0.1.' },
+      3389: { id: 'CVE-2019-0708', cvss: 9.8, name: 'BlueKeep RDP Execution', desc: 'Pre-authentication remote code execution flaw. Enforce Network Level Auth (NLA).' },
+      5900: { id: 'CVE-2006-2369', cvss: 8.8, name: 'RealVNC Auth Bypass', desc: 'VNC client request validation flaw. Encapsulate in SSH tunnel.' },
+      8080: { id: 'CVE-2021-44228', cvss: 10.0, name: 'Log4Shell JNDI Injection', desc: 'Unauthenticated RCE via Java logging framework. Enforce Log4j2 >= 2.17.1.' },
+      27017: { id: 'CVE-2019-2386', cvss: 8.2, name: 'MongoDB NoSQL Injection', desc: 'Unauthenticated DB exposure. Enable authentication and role-based access.' }
+    };
+
+    let devices = [];
+    let knownRegistry = [];
+    let knownIps = JSON.parse(localStorage.getItem('dash_known_ips') || '[]');
+    let serviceApps = [];
+    let isScanning = false;
+    let scanAbortCtl = null;
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let selectedNodeId = null;
+    let voiceAlerts = false;
+    let audioFX = true;
+    let viewMode = 'GRID';
+
+    /* Audio FX Synthesizer */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+      if (!audioFX || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(_) {}
+    }
+
+    function playAlertSound() {
+      playBeep(880, 'triangle', 0.15);
+      setTimeout(() => playBeep(587, 'triangle', 0.25), 100);
+    }
+
+    /* Registry Loader */
+    async function loadRegistries() {
+      try {
+        const r = await fetch('known-devices.json');
+        if (r.ok) {
+          const d = await r.json();
+          knownRegistry = d.devices || [];
+          knownRegistry.forEach(item => {
+            if (!knownIps.includes(item.ip)) knownIps.push(item.ip);
+          });
+        }
+      } catch(e) {}
+
+      try {
+        const r = await fetch('known-hosts.csv');
+        if (r.ok) {
+          const txt = await r.text();
+          const lines = txt.trim().split('\n').slice(1);
+          lines.forEach(line => {
+            const [ip, label, type, icon, notes] = line.split(',').map(s => s.trim());
+            if (ip && !knownRegistry.find(d => d.ip === ip)) {
+              knownRegistry.push({ ip, label: label||ip, type: type||'device', icon: icon||'📌', notes: notes||'' });
+            }
+            if (ip && !knownIps.includes(ip)) knownIps.push(ip);
+          });
+        }
+      } catch(e) {}
+      localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
+
+      try {
+        const r = await fetch('service-apps.json');
+        if (r.ok) serviceApps = await r.json();
+      } catch(e) {}
+    }
+
+    function getRegistryDevice(ip) {
+      return knownRegistry.find(d => d.ip === ip);
+    }
+
+    function initDeviceGrid() {
+      const subnet = document.getElementById('subnet-val').value.trim();
+      devices = Array.from({length: 254}, (_, i) => {
+        const id = i + 1;
+        const ip = `${subnet}.${id}`;
+        const reg = getRegistryDevice(ip);
+        const isKnown = knownIps.includes(ip);
+        return {
+          id,
+          ip,
+          status: 'DEAD',
+          ports: [],
+          hostname: reg ? reg.label : null,
+          latency: null,
+          lastSeen: localStorage.getItem(`dash_seen_${ip}`) || null,
+          isKnown
+        };
+      });
+      renderRadar();
+      updatePostureStats();
+    }
+
+    function renderRadar() {
+      const grid = document.getElementById('radar-grid');
+      const list = document.getElementById('radar-list-view');
+      
+      const filtered = devices.filter(d => {
+        if (activeFilter === 'online' && d.status !== 'ONLINE' && d.status !== 'UNKNOWN') return false;
+        if (activeFilter === 'unknown' && d.status !== 'UNKNOWN') return false;
+        if (activeFilter === 'risk' && !hasHighRisk(d.ports)) return false;
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          const reg = getRegistryDevice(d.ip);
+          const matchIp = d.ip.includes(q);
+          const matchName = reg && reg.label.toLowerCase().includes(q);
+          const matchPort = d.ports.some(p => p.toString().includes(q));
+          if (!matchIp && !matchName && !matchPort) return false;
+        }
+        return true;
+      });
+
+      // Render Grid View
+      grid.innerHTML = devices.map(d => {
+        let stateClass = 'state-dead';
+        if (d.status === 'ONLINE') {
+          stateClass = hasHighRisk(d.ports) ? 'state-vuln' : 'state-auth';
+        } else if (d.status === 'UNKNOWN') {
+          stateClass = 'state-unknown';
+        } else if (d.status === 'OFFLINE') {
+          stateClass = 'state-offline';
+        }
+
+        const reg = getRegistryDevice(d.ip);
+        const name = reg ? reg.label : (d.hostname || d.id);
+        const icon = reg ? reg.icon : '';
+
+        return `
+          <div class="radar-node ${stateClass}" onclick="openDrawer(${d.id})" id="node-${d.id}" title="${d.ip} ${reg ? ':: ' + reg.label : ''}">
+            <div class="node-dot"></div>
+            <div class="node-label">${icon ? icon + ' ' : ''}${name}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Render List View
+      list.innerHTML = filtered.map(d => {
+        const reg = getRegistryDevice(d.ip);
+        const isVuln = hasHighRisk(d.ports);
+        const statusColor = d.status === 'ONLINE' ? (isVuln ? 'var(--crimson)' : 'var(--green)') : d.status === 'UNKNOWN' ? 'var(--orange)' : 'var(--text-dark)';
+        const portsBadge = d.ports.length ? d.ports.map(p => `<span style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-size:0.65rem;font-family:'JetBrains Mono';">${p}</span>`).join(' ') : '<span style="color:var(--text-dark);font-size:0.65rem;">No open ports</span>';
+        
+        return `
+          <div class="list-host-card" onclick="openDrawer(${d.id})">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1.2rem;">${reg ? reg.icon : '💻'}</span>
+              <div>
+                <div style="font-family:'JetBrains Mono';font-size:0.85rem;font-weight:700;color:#fff;">${d.ip}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);">${reg ? reg.label : (d.hostname || 'Unknown Target')}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              ${portsBadge}
+            </div>
+            <div style="font-family:'Chakra Petch';font-weight:700;font-size:0.75rem;color:${statusColor};">${d.status}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function hasHighRisk(ports) {
+      return ports.some(p => {
+        const inf = PORT_INTEL[p];
+        return inf && (inf.r === 'HIGH' || inf.r === 'CRITICAL');
+      });
+    }
+
+    /* Multi-threaded Fast Network Scanner */
+    async function triggerScan() {
+      if (isScanning) {
+        if (scanAbortCtl) scanAbortCtl.abort();
+        finishScan();
+        return;
+      }
+
+      isScanning = true;
+      scanAbortCtl = new AbortController();
+      document.getElementById('btn-scan').textContent = '⏹ HALT SCAN';
+      document.getElementById('btn-scan').classList.add('btn-cyber-sec');
+      
+      logIncident('Starting subnet sweep and threat reconnaissance...', 'info');
+      if (voiceAlerts) speak('Starting subnet reconnaissance scan');
+
+      const preset = document.getElementById('scan-mode-preset').value;
+      const ports = PORT_PRESETS[preset];
+      const BATCH_SIZE = 12;
+
+      for (let i = 0; i < devices.length; i++) {
+        if (scanAbortCtl.signal.aborted) break;
+        const d = devices[i];
+        let online = false;
+
+        for (let j = 0; j < ports.length; j += BATCH_SIZE) {
+          const batch = ports.slice(j, j + BATCH_SIZE);
+          await Promise.all(batch.map(async p => {
+            try {
+              const ac = new AbortController();
+              const timer = setTimeout(() => ac.abort(), 850);
+              await fetch(`http://${d.ip}:${p}`, { mode: 'no-cors', signal: ac.signal });
+              clearTimeout(timer);
+              if (!d.ports.includes(p)) d.ports.push(p);
+              online = true;
+            } catch(e) {}
+          }));
+        }
+
+        if (online) {
+          handleNodeOnline(d);
+        } else if (d.status === 'ONLINE' || d.status === 'UNKNOWN') {
+          handleNodeOffline(d);
+        }
+
+        if (i % 8 === 0) renderRadar();
+        document.getElementById('scan-progress-bar').style.width = `${((i + 1) / devices.length) * 100}%`;
+        updatePostureStats();
+      }
+
+      document.getElementById('scan-progress-bar').style.width = '100%';
+      setTimeout(() => { document.getElementById('scan-progress-bar').style.width = '0%'; }, 1500);
+      finishScan();
+    }
+
+    function handleNodeOnline(d) {
+      const wasDead = d.status === 'DEAD' || d.status === 'OFFLINE';
+      const isKnown = knownIps.includes(d.ip);
+      d.status = isKnown ? 'ONLINE' : 'UNKNOWN';
+      d.lastSeen = new Date().toISOString();
+      localStorage.setItem(`dash_seen_${d.ip}`, d.lastSeen);
+
+      if (wasDead) {
+        if (!isKnown) {
+          triggerToast(`⚠️ ROGUE DEVICE DISCOVERED :: ${d.ip}`, 'warn');
+          logIncident(`Rogue / Unknown Node Detected on network: ${d.ip}`, 'warn');
+          flashEdge('edge-alert-warn');
+          playAlertSound();
+          if (voiceAlerts) speak(`Warning: Unknown device detected at ${d.ip}`);
+        } else {
+          logIncident(`Authorized Node Online: ${d.ip}`, 'ok');
+          playBeep(660, 'sine', 0.08);
+        }
+      }
+
+      // Check CVE vulnerabilities
+      if (hasHighRisk(d.ports)) {
+        logIncident(`Vulnerability Warning: ${d.ip} exposes high-risk service ports [${d.ports.join(', ')}]`, 'crit');
+        flashEdge('edge-alert-danger');
+      }
+    }
+
+    function handleNodeOffline(d) {
+      d.status = 'OFFLINE';
+      logIncident(`Node Disconnected: ${d.ip}`, 'warn');
+      if (voiceAlerts) speak(`Device offline: ${d.ip}`);
+    }
+
+    function finishScan() {
+      isScanning = false;
+      document.getElementById('btn-scan').textContent = '⚡ EXECUTE SCAN';
+      document.getElementById('btn-scan').classList.remove('btn-cyber-sec');
+      logIncident('Subnet sweep and audit complete.', 'info');
+      renderRadar();
+      updatePostureStats();
+    }
+
+    /* Target Drawer Inspector */
+    window.openDrawer = function(id) {
+      selectedNodeId = id;
+      const d = devices[id - 1];
+      const drawer = document.getElementById('device-drawer');
+      const reg = getRegistryDevice(d.ip);
+      const isRisky = hasHighRisk(d.ports);
+
+      document.getElementById('drawer-ip').textContent = d.ip;
+      document.getElementById('drawer-host').textContent = reg ? `${reg.icon} ${reg.label} (${reg.type})` : (d.hostname || 'Unidentified Node');
+      document.getElementById('drawer-auth-btn').textContent = knownIps.includes(d.ip) ? 'REVOKE AUTH' : 'AUTHORIZE';
+
+      drawer.classList.toggle('threat-mode', isRisky);
+
+      // Telemetry info
+      const telem = document.getElementById('drawer-telemetry');
+      telem.innerHTML = `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="color:var(--text-muted);">Current State:</span>
+          <span style="font-weight:700;color:${d.status === 'ONLINE' ? 'var(--green)' : d.status === 'UNKNOWN' ? 'var(--orange)' : 'var(--text-dark)'}">${d.status}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="color:var(--text-muted);">Known Registry:</span>
+          <span>${knownIps.includes(d.ip) ? '✅ AUTHORIZED' : '❌ UNKNOWN'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="color:var(--text-muted);">Last Activity:</span>
+          <span style="font-family:'JetBrains Mono';">${d.lastSeen ? new Date(d.lastSeen).toLocaleTimeString() : 'Never'}</span>
+        </div>
+      `;
+
+      // Ports & CVE analysis
+      const portsBox = document.getElementById('drawer-ports');
+      if (!d.ports.length) {
+        portsBox.innerHTML = '<div style="color:var(--text-dark);font-size:0.75rem;padding:8px 0;">No active listening ports detected. Click "DEEP PROBE" to audit all ports.</div>';
+      } else {
+        portsBox.innerHTML = d.ports.map(p => {
+          const inf = PORT_INTEL[p] || { n: `Port ${p}`, r: 'LOW', d: 'Generic Service' };
+          const cve = CVE_INTEL[p];
+          const isCrit = inf.r === 'HIGH' || inf.r === 'CRITICAL';
+          
+          let cveHtml = '';
+          if (cve) {
+            cveHtml = `
+              <div class="cve-badge-box">
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.65rem;color:var(--crimson);margin-bottom:2px;">
+                  <span>VULNERABILITY: ${cve.name}</span>
+                  <span style="font-family:'JetBrains Mono';">${cve.id} [CVSS ${cve.cvss}]</span>
+                </div>
+                <div style="font-size:0.6rem;color:var(--text-muted);line-height:1.3;">${cve.desc}</div>
+              </div>
+            `;
+          }
+
+          return `
+            <a href="http://${d.ip}:${p}" target="_blank" class="port-radar-card ${isCrit ? 'risky' : ''}">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-family:'JetBrains Mono';font-weight:700;font-size:0.85rem;">PORT ${p} :: ${inf.n}</span>
+                <span style="font-size:0.6rem;padding:2px 6px;border-radius:4px;font-weight:800;background:${isCrit ? 'var(--crimson)' : 'var(--green)'};color:#000;">${inf.r}</span>
+              </div>
+              <span style="font-size:0.65rem;color:var(--text-muted);">${inf.d}</span>
+            </a>
+            ${cveHtml}
+          `;
+        }).join('');
+      }
+
+      // Matched services from registry
+      const svcBox = document.getElementById('drawer-services');
+      const matches = serviceApps.filter(app => {
+        if (!app.port) return false;
+        const appPorts = String(app.port).split(',').map(x => parseInt(x.trim()));
+        return appPorts.some(x => d.ports.includes(x));
+      });
+
+      if (matches.length) {
+        document.getElementById('drawer-services-box').style.display = 'block';
+        svcBox.innerHTML = matches.map(s => `
+          <div style="background:rgba(6,182,212,0.08);border:1px solid var(--accent);border-radius:4px;padding:6px 10px;margin-bottom:6px;">
+            <div style="font-weight:700;font-size:0.75rem;color:var(--accent);">${s.name || s.Name}</div>
+            <div style="font-size:0.65rem;color:var(--text-muted);">${(s.description || s.Description || '').substring(0, 100)}</div>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('drawer-services-box').style.display = 'none';
+      }
+
+      drawer.classList.add('open');
+    };
+
+    window.closeDrawer = function() {
+      document.getElementById('device-drawer').classList.remove('open');
+      selectedNodeId = null;
+    };
+
+    window.toggleNodeAuth = function() {
+      if (!selectedNodeId) return;
+      const d = devices[selectedNodeId - 1];
+      if (knownIps.includes(d.ip)) {
+        knownIps = knownIps.filter(x => x !== d.ip);
+        d.isKnown = false;
+        if (d.status === 'ONLINE') d.status = 'UNKNOWN';
+        logIncident(`Authorization revoked for ${d.ip}`, 'warn');
+      } else {
+        knownIps.push(d.ip);
+        d.isKnown = true;
+        if (d.status === 'UNKNOWN') d.status = 'ONLINE';
+        logIncident(`Node authorized & trusted: ${d.ip}`, 'ok');
+      }
+      localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
+      openDrawer(selectedNodeId);
+      renderRadar();
+      updatePostureStats();
+    };
+
+    window.scanTargetNode = async function() {
+      if (!selectedNodeId) return;
+      const d = devices[selectedNodeId - 1];
+      logIncident(`Executing deep port probe on target ${d.ip}...`, 'info');
+      playBeep(700, 'square', 0.1);
+      
+      const allPorts = PORT_PRESETS.security;
+      for (const p of allPorts) {
+        try {
+          const ac = new AbortController();
+          const t = setTimeout(() => ac.abort(), 700);
+          await fetch(`http://${d.ip}:${p}`, { mode: 'no-cors', signal: ac.signal });
+          clearTimeout(t);
+          if (!d.ports.includes(p)) d.ports.push(p);
+        } catch(e) {}
+      }
+      d.status = knownIps.includes(d.ip) ? 'ONLINE' : 'UNKNOWN';
+      openDrawer(selectedNodeId);
+      renderRadar();
+      updatePostureStats();
+      logIncident(`Deep probe on ${d.ip} completed. Found ${d.ports.length} listening ports.`, 'ok');
+    };
+
+    /* Live Incident Stream */
+    function logIncident(msg, type = 'info') {
+      const stream = document.getElementById('incident-stream');
+      if (!stream) return;
+      const el = document.createElement('div');
+      el.className = `feed-entry ${type}`;
+      const time = new Date().toLocaleTimeString();
+      el.innerHTML = `<span style="opacity:0.6;">[${time}]</span> ${msg}`;
+      stream.prepend(el);
+      if (stream.children.length > 80) stream.removeChild(stream.lastChild);
+    }
+    window.clearIncidentLog = function() {
+      document.getElementById('incident-stream').innerHTML = '';
+    };
+
+    /* Posture and Stats */
+    function updatePostureStats() {
+      const onlineNodes = devices.filter(d => d.status === 'ONLINE');
+      const unknownNodes = devices.filter(d => d.status === 'UNKNOWN');
+      const atRiskNodes = devices.filter(d => (d.status === 'ONLINE' || d.status === 'UNKNOWN') && hasHighRisk(d.ports));
+      
+      document.getElementById('count-all').textContent = devices.length;
+      document.getElementById('count-online').textContent = onlineNodes.length;
+      document.getElementById('count-unknown').textContent = unknownNodes.length;
+      document.getElementById('count-risk').textContent = atRiskNodes.length;
+
+      let totalPorts = 0;
+      devices.forEach(d => totalPorts += d.ports.length);
+      document.getElementById('audited-ports-count').textContent = totalPorts;
+
+      // Posture rating
+      const threatPill = document.getElementById('threat-indicator');
+      const scoreEl = document.getElementById('posture-score');
+      if (atRiskNodes.length > 2 || unknownNodes.length > 2) {
+        threatPill.className = 'threat-pill threat-critical';
+        threatPill.textContent = 'DEFCON 1 (HIGH)';
+        scoreEl.textContent = 'F (AT RISK)';
+        scoreEl.style.color = 'var(--crimson)';
+      } else if (atRiskNodes.length > 0 || unknownNodes.length > 0) {
+        threatPill.className = 'threat-pill threat-elevated';
+        threatPill.textContent = 'DEFCON 3 (ALERT)';
+        scoreEl.textContent = 'B- (ELEVATED)';
+        scoreEl.style.color = 'var(--orange)';
+      } else {
+        threatPill.className = 'threat-pill threat-low';
+        threatPill.textContent = 'DEFCON 5 (NORMAL)';
+        scoreEl.textContent = 'A+ (SECURE)';
+        scoreEl.style.color = 'var(--green)';
+      }
+    }
+
+    /* Visual Alerts and Edge Flashing */
+    function flashEdge(cls) {
+      const b = document.getElementById('soc-body');
+      b.classList.add(cls);
+      setTimeout(() => b.classList.remove(cls), 4000);
+    }
+
+    function triggerToast(msg, type = 'info') {
+      const t = document.getElementById('global-alert-toast');
+      t.textContent = msg;
+      t.className = 'show';
+      t.style.borderColor = type === 'warn' ? 'var(--orange)' : type === 'crit' ? 'var(--crimson)' : 'var(--accent)';
+      setTimeout(() => { t.className = ''; }, 4500);
+    }
+
+    function speak(text) {
+      if (!voiceAlerts || !('speechSynthesis' in window)) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.05;
+      window.speechSynthesis.speak(u);
+    }
+
+    window.toggleVoiceAlerts = function() {
+      voiceAlerts = !voiceAlerts;
+      document.getElementById('btn-voice-toggle').textContent = voiceAlerts ? '🔊' : '🔇';
+      if (voiceAlerts) speak('Voice alerting activated');
+    };
+
+    window.toggleAudioFX = function() {
+      audioFX = !audioFX;
+      document.getElementById('btn-sound-toggle').textContent = audioFX ? '🔊' : '🔇';
+    };
+
+    window.setFilter = function(f, btn) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRadar();
+    };
+
+    window.onSearchInput = function(val) {
+      searchQuery = val.trim();
+      renderRadar();
+    };
+
+    window.toggleViewMode = function() {
+      viewMode = viewMode === 'GRID' ? 'LIST' : 'GRID';
+      document.getElementById('btn-view-toggle').textContent = viewMode;
+      document.getElementById('radar-grid').style.display = viewMode === 'GRID' ? 'grid' : 'none';
+      document.getElementById('radar-list-view').style.display = viewMode === 'LIST' ? 'flex' : 'none';
+      renderRadar();
+    };
+
+    window.setRtspPassword = function() {
+      const cur = localStorage.getItem('dash_rtsp_pwd') || '781869a';
+      const pwd = prompt("Enter RTSP Security Camera Password:", cur);
+      if (pwd !== null) {
+        localStorage.setItem('dash_rtsp_pwd', pwd);
+        triggerToast("RTSP Camera Password Updated", "info");
+      }
+    };
+
+    window.openCamFull = function(num) {
+      window.open(`8cam-view.html?cam=${num}`, '_blank');
+    };
+
+    window.onPresetChange = function() {
+      const preset = document.getElementById('scan-mode-preset').value;
+      logIncident(`Scan preset changed to: ${preset.toUpperCase()} (${PORT_PRESETS[preset].length} ports)`, 'info');
+    };
+
+    /* Deep Audit All Online & Known Hosts */
+    window.triggerDeepAudit = async function() {
+      if (isScanning) return;
+      isScanning = true;
+      document.getElementById('btn-audit').textContent = '⏳ AUDITING...';
+      logIncident('Starting Deep CVE Port Audit across all active hosts...', 'warn');
+      flashEdge('edge-alert-warn');
+      speak('Starting deep vulnerability audit');
+
+      const onlineTargets = devices.filter(d => d.status === 'ONLINE' || d.status === 'UNKNOWN');
+      const auditPorts = PORT_PRESETS.security;
+
+      for (const d of onlineTargets) {
+        for (const p of auditPorts) {
+          try {
+            const ac = new AbortController();
+            const t = setTimeout(() => ac.abort(), 600);
+            await fetch(`http://${d.ip}:${p}`, { mode: 'no-cors', signal: ac.signal });
+            clearTimeout(t);
+            if (!d.ports.includes(p)) d.ports.push(p);
+          } catch(e) {}
+        }
+      }
+
+      isScanning = false;
+      document.getElementById('btn-audit').textContent = '🛡️ AUDIT ALL';
+      logIncident('Deep CVE Port Audit complete across all target nodes.', 'ok');
+      playBeep(880, 'sine', 0.15);
+      renderRadar();
+      updatePostureStats();
+    };
+
+    /* Configuration Modal Handlers */
+    window.openConfigModal = function() {
+      document.getElementById('cfg-rtsp-pwd').value = localStorage.getItem('dash_rtsp_pwd') || '781869a';
+      document.getElementById('cfg-subnet').value = document.getElementById('subnet-val').value || '192.168.1';
+      document.getElementById('cfg-scan-interval').value = localStorage.getItem('dash_scan_interval') || '300';
+      document.getElementById('config-modal').classList.add('open');
+    };
+
+    window.closeConfigModal = function() {
+      document.getElementById('config-modal').classList.remove('open');
+    };
+
+    window.saveConfigModal = function() {
+      const pwd = document.getElementById('cfg-rtsp-pwd').value.trim();
+      const subnet = document.getElementById('cfg-subnet').value.trim();
+      const interval = document.getElementById('cfg-scan-interval').value;
+
+      if (pwd) localStorage.setItem('dash_rtsp_pwd', pwd);
+      if (subnet) {
+        document.getElementById('subnet-val').value = subnet;
+        localStorage.setItem('dash_subnet', subnet);
+      }
+      localStorage.setItem('dash_scan_interval', interval);
+
+      setupAutoScan();
+      closeConfigModal();
+      triggerToast('Configuration Saved & Applied', 'info');
+      logIncident('System parameters updated and saved to storage.', 'ok');
+    };
+
+    window.resetDefaults = function() {
+      if (!confirm('Reset all parameters to default factory settings?')) return;
+      localStorage.removeItem('dash_rtsp_pwd');
+      localStorage.removeItem('dash_subnet');
+      localStorage.removeItem('dash_scan_interval');
+      localStorage.removeItem('dash_known_ips');
+      document.getElementById('cfg-rtsp-pwd').value = '781869a';
+      document.getElementById('cfg-subnet').value = '192.168.1';
+      document.getElementById('cfg-scan-interval').value = '300';
+      triggerToast('Defaults Restored', 'warn');
+    };
+
+    window.exportKnownHosts = function() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(knownDevices, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `known-devices-backup-${Date.now()}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      triggerToast('Registry Exported', 'info');
+    };
+
+    window.importKnownHosts = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            knownDevices = imported;
+            knownIps = knownDevices.map(d => d.ip);
+            localStorage.setItem('dash_known_ips', JSON.stringify(knownIps));
+            renderRadar();
+            updatePostureStats();
+            triggerToast(`Imported ${imported.length} Known Hosts`, 'info');
+          }
+        } catch(err) {
+          alert('Invalid JSON file format.');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    let autoScanTimer = null;
+    function setupAutoScan() {
+      if (autoScanTimer) clearInterval(autoScanTimer);
+      const secs = parseInt(localStorage.getItem('dash_scan_interval') || '300', 10);
+      if (secs > 0) {
+        autoScanTimer = setInterval(() => {
+          if (!isScanning) {
+            logIncident('Executing scheduled auto-scan refresh...', 'info');
+            triggerScan();
+          }
+        }, secs * 1000);
+      }
+    }
+    setupAutoScan();
+
+    /* Real-Time Background & Telemetry Canvas Animation */
+    function initCanvasVisualizers() {
+      // 1. Cyber Matrix Grid Background
+      const bgCanvas = document.getElementById('cyber-bg-canvas');
+      const bgCtx = bgCanvas.getContext('2d');
+      function resizeBg() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resizeBg);
+      resizeBg();
+
+      function drawMatrixBg() {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        bgCtx.strokeStyle = 'rgba(6, 182, 212, 0.04)';
+        bgCtx.lineWidth = 1;
+        const step = 40;
+        for (let x = 0; x < bgCanvas.width; x += step) {
+          bgCtx.beginPath(); bgCtx.moveTo(x, 0); bgCtx.lineTo(x, bgCanvas.height); bgCtx.stroke();
+        }
+        for (let y = 0; y < bgCanvas.height; y += step) {
+          bgCtx.beginPath(); bgCtx.moveTo(0, y); bgCtx.lineTo(bgCanvas.width, y); bgCtx.stroke();
+        }
+      }
+      drawMatrixBg();
+
+      // 2. Packet Radar Waveform
+      const radarCanvas = document.getElementById('packet-radar-canvas');
+      const rCtx = radarCanvas.getContext('2d');
+      let radarData = Array(35).fill(15);
+
+      function animateRadar() {
+        const pps = isScanning ? Math.round(160 + Math.random() * 80) : Math.round(18 + Math.random() * 12);
+        document.getElementById('pps-counter').textContent = `${pps} PPS`;
+        radarData.push(pps);
+        radarData.shift();
+
+        rCtx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
+        
+        // Draw Wave
+        rCtx.beginPath();
+        radarData.forEach((val, i) => {
+          const x = (i / (radarData.length - 1)) * radarCanvas.width;
+          const y = radarCanvas.height - (val / 300) * (radarCanvas.height - 10) - 5;
+          if (i === 0) rCtx.moveTo(x, y);
+          else rCtx.lineTo(x, y);
+        });
+        rCtx.strokeStyle = isScanning ? '#f43f5e' : '#06b6d4';
+        rCtx.lineWidth = 2;
+        rCtx.stroke();
+
+        // Gradient Fill
+        rCtx.lineTo(radarCanvas.width, radarCanvas.height);
+        rCtx.lineTo(0, radarCanvas.height);
+        rCtx.fillStyle = isScanning ? 'rgba(244, 63, 94, 0.12)' : 'rgba(6, 182, 212, 0.08)';
+        rCtx.fill();
+
+        setTimeout(animateRadar, 400);
+      }
+      animateRadar();
+
+      // 3. WAN Latency Sparkline
+      const wanCanvas = document.getElementById('wan-latency-sparkline');
+      const wCtx = wanCanvas.getContext('2d');
+      let wanHistory = Array(12).fill(20);
+
+      async function checkWanHealth() {
+        const t0 = performance.now();
+        try {
+          const ac = new AbortController();
+          const timer = setTimeout(() => ac.abort(), 1500);
+          await fetch('https://1.1.1.1/cdn-cgi/trace?t=' + Date.now(), { mode: 'no-cors', signal: ac.signal });
+          clearTimeout(timer);
+          const ms = Math.round(performance.now() - t0);
+          wanHistory.push(Math.min(ms, 100));
+          document.getElementById('wan-dot').style.background = 'var(--green)';
+          document.getElementById('wan-status-text').textContent = `WAN :: ${ms}ms`;
+        } catch(e) {
+          wanHistory.push(0);
+          document.getElementById('wan-dot').style.background = 'var(--red)';
+          document.getElementById('wan-status-text').textContent = `WAN :: OFFLINE`;
+        }
+        if (wanHistory.length > 12) wanHistory.shift();
+
+        // Render sparkline
+        wCtx.clearRect(0, 0, wanCanvas.width, wanCanvas.height);
+        wCtx.beginPath();
+        wanHistory.forEach((val, i) => {
+          const x = (i / (wanHistory.length - 1)) * wanCanvas.width;
+          const y = wanCanvas.height - (val / 100) * (wanCanvas.height - 4) - 2;
+          if (i === 0) wCtx.moveTo(x, y);
+          else wCtx.lineTo(x, y);
+        });
+        wCtx.strokeStyle = '#10b981';
+        wCtx.lineWidth = 1.5;
+        wCtx.stroke();
+      }
+      setInterval(checkWanHealth, 8000);
+      checkWanHealth();
+    }
+
+    /* Initialization Lifecycle */
+    (async function initDashboard() {
+      await loadRegistries();
+      initDeviceGrid();
+      initCanvasVisualizers();
+      if (window.initGo2RtcFeeds) window.initGo2RtcFeeds();
+      logIncident('AutoDash SOC Reconnaissance Engine initialized.', 'ok');
+    })();
+  </script>
+</body>
+</html>
